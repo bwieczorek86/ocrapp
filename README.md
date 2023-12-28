@@ -1,4 +1,21 @@
-# Functions
+# Application 
+
+The main task of the application is to assign the OCR scan of the letter to the client's system. The letter is searched based on previously prepared templates in which we can mark permanent fields in which we can find unique data that can be associated with a specific record in the client's system.
+
+## Libraries and Cloud Integrations
+
+The application is based on Azure cloud solutions:
+
+- App Service
+- Azure Functions
+- Blob Storage
+- Queue Storage
+- Cosmo DB
+- Bing Spell Checker
+
+Authorization and authentication was done using JWT Bearer Token
+
+The commercial IronOCR library was used to OCR documents
 
 ## Instalation
 
@@ -6,7 +23,7 @@ npm -i -g azure-functions-core-tools@3
 
 # OcrPlugin 
 
-Komendy wykonujemy na projekcie OcrPlugin.App.Blazor
+All commands should be run on project: OcrPlugin.App.Blazor
 
 dotnet ef migrations add update-db-7 --project ..\\OcrPlugin.App.Db\\OcrPlugin.App.Db.csproj \
 dotnet ef database update
@@ -38,12 +55,7 @@ func azure functionapp fetch-app-settings ocr-plugin
 - OcrPlugin.App.Integrations
 - Delete temp files from wwwroot/files/temp folder when editing template it gets path with template file and copy to load in view
 
-- lepszy widok z raportem x
-
-
-
 // https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
-
 
 # How to add a new template type 
 - create the type in the namespace OcrPlugin.App.Core.Templates.TemplateTypes

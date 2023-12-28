@@ -1,0 +1,50 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using System.Drawing
+@using System.IO
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main
+
+@inject OcrApi _ocrApi
+@inject IHttpWrapper _httpWrapper
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_element">
+    background: white;
+    border-radius: 10px;
+    height: 96vh;
+    margin: 17px;
+</Styled>
+
+<DocumentPreview InheritedClass="@_element"
+                 Template="@Template"
+                 @ref="@_documentPreview"
+/>
+<CheckProperties InheritedClass="@_element"
+                 Template="@Template"
+                 SaveTemplate="@(async () => await SaveTemplate())"
+                 @ref="@_checkProperties"
+/>
+
+@code {
+    private string _element;
+    private DocumentPreview _documentPreview;
+    private CheckProperties _checkProperties;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    private async Task SaveTemplate()
+    {
+        await _httpWrapper.PostAsJsonAsync("api/templates/update", Template);
+    }
+
+    public async Task ChangeState(Template template)
+    {
+        Template = template;
+        await _documentPreview.SetDocumentPreview(template);
+        _checkProperties.ChangeState(template);
+        StateHasChanged();
+    }
+}

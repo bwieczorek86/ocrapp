@@ -1,0 +1,66 @@
+<Styled @bind-Classname="@_className">
+    font-size: 25px;
+    max-width: 28vh;
+    margin-top: 5px;
+</Styled>
+
+<Styled @bind-Classname="@_text">
+    margin: auto 0;
+</Styled>
+
+<Styled Classname="@_text" PseudoClass="PseudoClasses.Hover">
+    overflow: visible;
+    white-space: normal;
+</Styled>
+
+<div class="@_className">
+    <div style="display: flex;">
+        <Icon IconName="@IconName" Height="48" Width="48" Margin="auto 20px auto 0" BgColor="#004AAD"/>
+        <div @onmouseenter="OnMouseEnter" @onmouseleave="OnMouseLeave" class="@_text">@GetName()</div>
+    </div>
+</div>
+
+@code {
+    private string _className, _text;
+    private bool _isHovered;
+
+    [Parameter]
+    public string Name { get; set; } = string.Empty;
+
+    [Parameter]
+    public string IconName { get; set; }
+
+    private string GetName()
+    {
+        if (Name.Length <= 20)
+        {
+            return Name;
+        }
+
+        return _isHovered
+            ? Name
+            : Name.Substring(0, 20) + "...";
+    }
+
+    private void OnMouseEnter()
+    {
+        if (_isHovered)
+        {
+            return;
+        }
+
+        _isHovered = true;
+        StateHasChanged();
+    }
+
+    private void OnMouseLeave()
+    {
+        if (!_isHovered)
+        {
+            return;
+        }
+
+        _isHovered = false;
+        StateHasChanged();
+    }
+}

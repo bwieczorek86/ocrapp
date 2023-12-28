@@ -1,0 +1,145 @@
+@page "/reports/{ReportId}"
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.navbar
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components.pager
+@using OcrPlugin.App.Common
+
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_className">
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 20px;
+</Styled>
+
+<NavBar/>
+<div class="@_className">
+    @if (_isLoading)
+    {
+        <Loading />
+    }
+    else
+    {
+        if (_singleReport != null)
+        {
+            <ReportDetails Report="_singleReport" />
+
+            @if (_filteredReportFilesChunked.Any())
+            {
+                var filteredReportsChunk = _filteredReportFilesChunked.ElementAt(_currentChunk);
+                <FilesTable ReportId="@_singleReport.Id" ReportFiles="@filteredReportsChunk" @ref="@_filesTable"></FilesTable>
+
+                @if (_filteredReportFilesChunked.Count > 1)
+                {
+                    <TablePager CurrentPage="@(_currentChunk+1)"
+                                PageCount="@_filteredReportFilesChunked.Count"
+                                OnPageChanged="@(async pageNumber => { await FetchData(pageNumber); })"
+                                ShowFirstLast="true"
+                                ShowPageNumbers="true"
+                                VisiblePages="5"
+                                FirstText="<<"
+                                LastText=">>"
+                                NextText=">"
+                                PreviousText="<"/>
+                }
+            }
+        }
+        else
+        {
+            <p style="margin-left: 20px;">404 - raport nie istnieje</p>
+        }
+    }
+</div>
+
+@code {
+    private string _className;
+    private SingleReportDto _singleReport;
+    private IList<SingleReportFile[]> _filteredReportFilesChunked = new List<SingleReportFile[]>();
+    private int _currentChunk = 0;
+    private bool _isLoading = true;
+    private FilesTable _filesTable;
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    private Timer Timer { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _tokenService.CheckIfTokenIsNotExpired();
+        Layout.SiteMenuCollapsed = false;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.Search
+            ? OnSearchChanged(value)
+            : Task.CompletedTask;
+
+        var requestMsg = new HttpRequestMessage(HttpMethod.Get, $"api/Reports/{ReportId}");
+        _singleReport = await _httpWrapper.GetAsync<SingleReportDto>(requestMsg, _ => ValueTask.CompletedTask);
+        _filteredReportFilesChunked = _singleReport?.ReportFiles.Chunk(13).ToList();
+
+        var stillProcessingFiles = _singleReport?.ReportFiles.Where(file => file.Status == Consts.FileProcessingStatus.Processing).ToList();
+        if (stillProcessingFiles?.Any() == true)
+        {
+            await KeepCheckingState();
+        }
+
+        await base.OnInitializedAsync();
+        _isLoading = false;
+    }
+
+    private async Task KeepCheckingState()
+    {
+        Timer = new Timer(async _ =>
+        {
+            var timerCount = _singleReport.ReportFiles.Count(file => file.Status == Consts.FileProcessingStatus.Processing);
+
+            if (timerCount > 0)
+            {
+                var requestMsg = new HttpRequestMessage(HttpMethod.Get, $"api/Reports/{ReportId}");
+                _singleReport = await _httpWrapper.GetAsync<SingleReportDto>(requestMsg, _ => ValueTask.CompletedTask);
+                _filteredReportFilesChunked = _singleReport?.ReportFiles.Chunk(13).ToList();
+
+                await InvokeAsync(StateHasChanged);
+                _filesTable.UpdateState(_filteredReportFilesChunked.ElementAt(_currentChunk));
+
+            }
+            else
+            {
+                await Timer.DisposeAsync();
+            }
+        }, null, 5000, 5000);
+    }
+
+    private async Task OnSearchChanged(string value)
+    {
+        _currentChunk = 0;
+
+        var valueUpper = value.ToUpperInvariant();
+
+        _filteredReportFilesChunked = _singleReport.ReportFiles.Where(c
+            => c.FileName.ToUpperInvariant().Contains(valueUpper)
+               || c.Status.ToUpperInvariant().Contains(valueUpper)
+            ).Chunk(13).ToList();
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private Task FetchData(int page)
+    {
+        _currentChunk = page-1;
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+}

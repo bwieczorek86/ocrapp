@@ -1,0 +1,103 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using Microsoft.AspNetCore.Components
+
+@inject NavigationManager _navigationManager
+@inject SomethingChangedEvent _somethingChangedEvent
+
+<Styled @bind-Classname="@_className">
+    font-size: 30px;
+    font-weight: bold;
+    display: flex;
+    margin: 1vw 0vw 1vw 1vw;
+    color: white;
+    text-decoration: none;
+
+    .sidebar-collapse .@_className {
+        margin: 3vh 0vh 3vh 0.5vh;
+    }
+</Styled>
+
+<Styled @bind-Classname="@_active">
+    border: 30px white solid;
+    background-color: white;
+    border-radius: 60px 0px 0px 60px;
+    color: #004AAC;
+    border-left: 0px;
+    letter-spacing: 2px;
+</Styled>
+
+<div>
+    <a class="@_className @(IsActive ? _active : "")" href="@Route">
+        <div style="display: flex;">
+            @if (IconMask) {
+                <Icon IconName="@IconName" Height="@IconHeight" Width="48" Margin="@(IsCollapsed ? "auto 30px auto 25px" : "auto 10px auto 20px")" BgColor="@GetBgColor()"/>
+            } else {
+                <IconNoMask IconName="@IconName" Height="48" Width="48" Margin="@(IsCollapsed ? "auto 30px auto 25px" : "auto 10px auto 20px")"/>
+            }
+            @if (!IsCollapsed)
+            {
+                <div style="margin: auto;">@Text</div>
+            }
+        </div>
+    </a>
+    @if (IsActive)
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    private string _className, _active;
+
+    [Parameter]
+    public string Text { get; set; }
+
+    [Parameter]
+    public string IconName { get; set; }
+
+    [Parameter]
+    public bool IconMask { get; set; } = true;
+
+    [Parameter]
+    public string IconHeight { get; set; } = "48";
+
+    [Parameter]
+    public string Route { get; set; }
+
+    [Parameter]
+    public bool IsCollapsed { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private bool IsActive { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.Route ? OnChanged(value) : Task.CompletedTask;
+        UpdateIsActiveField();
+
+        base.OnInitialized();
+    }
+
+    private void UpdateIsActiveField()
+    {
+        var pageUrl = new Uri(_navigationManager.Uri);
+        IsActive = pageUrl.LocalPath.Contains(Route);
+    }
+
+    private async Task OnChanged(string value)
+    {
+        await InvokeAsync(() =>
+        {
+            UpdateIsActiveField();
+            StateHasChanged();
+        });
+    }
+
+    private string GetBgColor()
+    {
+        return IsActive ? "#004AAC" : "white";
+    }
+}

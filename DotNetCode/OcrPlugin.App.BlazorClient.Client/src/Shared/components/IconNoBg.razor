@@ -1,0 +1,35 @@
+<Styled @bind-Classname="@ClassName">
+    width: @(Width)px;
+    height: @(Height)px;
+    background: url(/static/@(IconName).svg) 0px 0px no-repeat;
+    border: 0px none;
+    align-self: center;
+    margin: @(Margin);
+    background-size: 100%;
+</Styled>
+
+<div class="@GetClassName()"></div>
+
+@code {
+    [Parameter]
+    public string ClassName { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public string Width { get; set; }
+
+    [Parameter]
+    public string Height { get; set; }
+
+    [Parameter]
+    public string IconName { get; set; }
+
+    [Parameter]
+    public string Margin { get; set; }
+
+    private string GetClassName(){
+        return InheritedClass == null ? ClassName : $"{ClassName} {InheritedClass}";
+    }
+}

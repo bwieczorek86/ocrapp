@@ -1,0 +1,21 @@
+<Styled @bind-Classname="@ClassName">
+    height: 10vh;
+    display: flex;
+    margin-top: 1vh;
+    justify-content: right;
+</Styled>
+
+<div class="@ClassName">
+    @if (IncludeSearch)
+    {
+        <Search/>
+    }
+    <Icon IconName="profile" Height="91" Width="91" Margin="auto 10px auto 15px" BgColor="#4788C7"/>
+</div>
+
+@code {
+    private string ClassName { get; set; }
+    
+    [Parameter]
+    public bool IncludeSearch { get; set; } = true;
+}

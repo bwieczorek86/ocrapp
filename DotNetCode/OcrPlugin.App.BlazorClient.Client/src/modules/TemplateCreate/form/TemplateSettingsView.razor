@@ -1,0 +1,138 @@
+@using Microsoft.AspNetCore.Components
+@using OcrPlugin.App.BlazorClient.Client.modules.TemplateCreate.Cs
+@using Blazored.FluentValidation
+
+<Styled @bind-Classname="@_div">
+    margin: 20px 0px;
+</Styled>
+
+<Styled @bind-Classname="@_templateName">
+    font-weight: bold;
+    font-size: 24px;
+    border: 0px;
+    position: relative;
+    color: rgb(83, 85, 175);
+    width: 100%;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+</Styled>
+
+<Styled> @* autofill coloring  *@
+
+    input:autofil {
+    font-size: 50px;
+    }
+
+    input:-webkit-autofill::first-line {
+    font-size: 50px;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 100px white inset !important;
+    -webkit-text-fill-color: #004AAD
+    }
+
+    @@-webkit-keyframes autofill {
+    100% {
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    }
+    }
+</Styled>
+
+<EditForm style="margin: 25px;" Model="_createTemplateModel" OnValidSubmit="@(_ => HandleValidSubmit(_createTemplateModel))">
+    <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true"/>
+    <ValidationSummary />
+
+    <hr style="width: 100%">
+
+    <div class="@_div">
+        <InputText
+            class="@_templateName"
+            @bind-Value=_createTemplateModel.Name
+            id="@nameof(_createTemplateModel.Name)"
+            placeholder="Nazwa szablonu"
+        />
+        <ValidationMessage For="@(() => _createTemplateModel.Name)"/>
+    </div>
+
+    <hr style="width: 100%">
+
+    <div>
+        <label>Tytuły szablonów:</label>
+        @foreach (var titleTemplateMappings in _createTemplateModel.TitleTemplateMappings)
+        {
+            <div>
+                <InputText @bind-Value=@titleTemplateMappings.Title
+                           id="@nameof(titleTemplateMappings.Title)"
+                           style="width: 75%;
+                                  padding: 5px;
+                                  margin: 5px;
+                                  border: 2px solid rgb(83, 85, 175);
+                                  border-radius: 5px;"/>
+                <button @onclick:preventDefault="true"
+                        @onclick="@(_ => RemoveTitle(titleTemplateMappings.Title))"
+                        id="@nameof(titleTemplateMappings.Title)"
+                        style="border: none; background: none;">
+                    ❌
+                </button>
+            </div>
+        }
+        <AddNewTitleButton HandleValidSubmit="@AddTitle" Name="@L["Add_Next_Title"]" />
+        <ValidationMessage For="@(() => _createTemplateModel.TitleTemplateMappings)"/>
+    </div>
+
+    <hr style="width: 100%">
+
+    <div>
+        <InputCheckbox @bind-Value="_createTemplateModel.Settings.HasPublicId" type="checkbox" id="@nameof(_createTemplateModel.Settings.HasPublicId)"/>
+        <label for="@nameof(_createTemplateModel.Settings.HasPublicId)">@L["Public_Identifier"]</label>
+    </div>
+    <div>
+        <InputCheckbox @bind-Value="_createTemplateModel.IsActive" type="checkbox" id="@nameof(_createTemplateModel.IsActive)"/>
+        <label for="@nameof(_createTemplateModel.IsActive)">@L["Active"]</label>
+    </div>
+
+    <hr style="width: 100%">
+
+    <SaveButton Name="Stwórz" />
+</EditForm>
+
+@code {
+    private FluentValidationValidator _fluentValidationValidator;
+    private int _titleOrderId;
+    private string _templateName, _div;
+
+    [Parameter]
+    public Func<CreateTemplateModel, Task> HandleValidSubmit { get; set; }
+
+    private readonly CreateTemplateModel _createTemplateModel = new()
+    {
+        IsActive = true,
+        TitleTemplateMappings = new List<TitleTemplateMappingsDto> { new() }
+    };
+
+    private async Task AddTitle()
+    {
+        _createTemplateModel.TitleTemplateMappings.Add(new TitleTemplateMappingsDto { OrderId = ++_titleOrderId });
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private void RemoveTitle(string titleName)
+    {
+        var titleTemplateMappings = _createTemplateModel.TitleTemplateMappings.FirstOrDefault(x => x.Title == titleName);
+        _createTemplateModel.TitleTemplateMappings.Remove(titleTemplateMappings);
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,92 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+
+@inject ITemplateTypeManager _templateTypeManager
+
+<Styled @bind-Classname="@_container">
+    min-width: 20%;
+    max-width: 20%;
+    position: relative;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    line-height: 40px;
+</Styled>
+
+<div class="@InheritedClass @_container" @onmouseenter="OnMouseOver">
+    <div style="height: 160px; display: flex;">
+        <div style="margin: auto;">
+            <IconNoMask IconName="template-cords-edit-choose"  Height="150" Width="140" Margin="0px 0px 0px 20px"/>
+        </div>
+        <div class="@_chooseElementClass">Wybierz element</div>
+    </div>
+    <HrLine Width="90%"></HrLine>
+    @foreach (var propertyName in GetTypeProperties())
+    {
+        <PropertySelectorButton Name="@propertyName" OnClickCallback="@OnClickCallback" ShouldDrawOnInit="ShouldDraw(propertyName)" @ref="PropertySelectorButtonRef" />
+    }
+    <HrLine Width="90%"></HrLine>
+    <SaveButton Name="Sprawdź" HandleValidSubmit="@OcrProperties"/>
+</div>
+
+@code {
+    private string _container, _chooseElementClass;
+
+    private ICollection<PropertySelectorButton> _propertySelectorButtonRefs = new List<PropertySelectorButton>();
+    PropertySelectorButton PropertySelectorButtonRef {set => _propertySelectorButtonRefs.Add(value); }
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public string SelectedProperty { get; set; }
+
+    [Parameter]
+    public Func<Task> OcrProperties { get; set; }
+
+    [Parameter]
+    public EventCallback<(string, bool)> OnClickCallback { get; set; }
+
+    private bool ShouldDraw(string propertyName)
+    {
+        return Template.FilledProperties.FirstOrDefault(c => c.Name == propertyName) != null;
+    }
+
+    private IEnumerable<string> GetTypeProperties()
+    {
+        var typeProperties = _templateTypeManager.ResolveType(Template.Type)
+            .GetProperties()
+            .Select(prop => prop.Name)
+            .ToList();
+
+        if (Template.Settings.HasPublicId)
+        {
+            typeProperties.Remove(nameof(GeneralType.Nip));
+            typeProperties.Remove(nameof(GeneralType.Regon));
+            typeProperties.Remove(nameof(GeneralType.Pesel));
+        }
+        else
+        {
+            typeProperties.Remove(nameof(GeneralType.PublicId));
+        }
+
+        return typeProperties;
+    }
+
+    private async Task OnMouseOver(MouseEventArgs mouseEvent)
+    {
+        foreach (var propertySelectorButtonRef in _propertySelectorButtonRefs)
+        {
+            await propertySelectorButtonRef.DrawLine();
+        }
+    }
+}

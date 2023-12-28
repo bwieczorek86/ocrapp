@@ -1,0 +1,80 @@
+﻿@page "/report"
+@page "/report/{ReportId}"
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.modules.Ocr
+@using OcrPlugin.App.BlazorClient.Client.src.modules.Ocr.CorrectFile
+@using MainLayout = OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.MainLayout
+
+@inject ILocalSessionService _localSessionService
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_element">
+    background: white;
+    border-radius: 10px;
+    margin: 17px 24px 24px 24px;
+</Styled>
+
+<Styled @bind-Classname="@_filesProcessedClass">
+    background: white;
+    border-radius: 10px;
+    max-width: 540px;
+</Styled>
+
+<FilesLoadedReport InheritedClass="@_element"
+                   FilesToLoad="@FilesToLoad"
+                   @ref="_filesLoadedReport"
+                   IsOcrInited="@IsOcrInited"
+                   ReportId="@ReportId"
+/>
+
+<CorrectFile @ref="_correctFile" TemplateName="@TemplateName" IsOcrInited="@IsOcrInited"/>
+
+<FilesProcessedReport InheritedClass="@_filesProcessedClass"
+                      FilesProcessed="@FilesProcessed"
+                      OpenCorrectFileView="@ToggleCorrectModelView"
+                      @ref="_filesProcessedReport"
+                      IsOcrInited="@IsOcrInited"
+/>
+
+@code {
+    private string _element, _filesProcessedClass;
+    private FilesLoadedReport _filesLoadedReport;
+    private CorrectFile _correctFile;
+    private FilesProcessedReport _filesProcessedReport;
+
+    [Parameter]
+    public bool IsOcrInited { get; set; }
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    [Parameter]
+    public ISet<IBrowserFile> FilesToLoad { get; set; }
+
+    [Parameter]
+    public ISet<ProcessedFile> FilesProcessed { get; set; }
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Layout.SiteMenuCollapsed = true;
+
+        await Task.CompletedTask;
+    }
+
+    private async Task ToggleCorrectModelView(string reportId, string fileId)
+    {
+        _filesLoadedReport.ToggleHide();
+        await _correctFile.ToggleHide(reportId, fileId);
+        _filesProcessedReport.ToggleCollapse();
+        StateHasChanged();
+    }
+}

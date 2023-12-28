@@ -1,0 +1,100 @@
+﻿@page "/template/{TemplateName}"
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using System.Net
+@using MainLayout = OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.MainLayout
+
+@inject NavigationManager _navigationManager
+@inject ITemplateTypeManager _templateTypeManager
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject IHttpWrapper _httpWrapper
+
+@if (_isLoading)
+{
+    <Loading />
+}
+else
+{
+    if (ErrorMessage is not null)
+    {
+        <p>@ErrorMessage</p>
+    }
+    else
+    {
+        <ConteinerView Template="@_template" />
+    }
+}
+
+@code{
+    private bool _isLoading = true;
+    private Template _template;
+    private string ErrorMessage { get; set; }
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Layout.SiteMenuCollapsed = true;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        var requestMsg = new HttpRequestMessage(HttpMethod.Get, $"api/Templates/{TemplateName}");
+        _template = await _httpWrapper.GetAsync<Template>(requestMsg,  response =>
+        {
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                ErrorMessage = "Szablon nie istnieje";
+            }
+
+            return ValueTask.CompletedTask;;
+        });
+
+        _isLoading = false;
+        if (ErrorMessage != null)
+        {
+            return;
+        }
+
+        InitData();
+        StateHasChanged();
+    }
+
+    private void InitData()
+    {
+        var templateTypeProperties = _templateTypeManager.ResolveType(_template.Type)
+            .GetProperties()
+            .Select(prop => prop.Name)
+            .ToList();
+
+        AddTemplateTypeProperties(templateTypeProperties);
+        RemoveTemplateTypeProperties(templateTypeProperties);
+    }
+
+    private void RemoveTemplateTypeProperties(IEnumerable<string> templateTypeProperties)
+    {
+        var propertiesToRemove = templateTypeProperties.Except(_template.Properties.Select(x => x.Name).ToList()).ToList();
+        if (propertiesToRemove.Any())
+        {
+            _template.Properties = _template.Properties.Where(p => !propertiesToRemove.Contains(p.Name)).ToList();
+        }
+    }
+
+    private void AddTemplateTypeProperties(IEnumerable<string> templateTypeProperties)
+    {
+        var propertyNamesToAdd = templateTypeProperties.Except(_template.Properties.Select(x => x.Name).ToList()).ToList();
+        if (!propertyNamesToAdd.Any())
+        {
+            return;
+        }
+
+        var propertiesToAdd = propertyNamesToAdd.Select(propertyName => new Property { Name = propertyName }).ToList();
+        foreach (var propertyToAdd in propertiesToAdd)
+        {
+            _template.Properties.Add(propertyToAdd);
+        }
+    }
+}

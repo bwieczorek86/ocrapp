@@ -1,0 +1,87 @@
+<Styled @bind-Classname="@_container">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: relative;
+    overflow-y: auto;
+    max-height: 95vh;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 30px;
+    white-space: nowrap;
+</Styled>
+
+<Styled @bind-Classname="@_elements">
+    margin: 5px 32px;
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    --s: 0.01em;   /* the thickness of the line */
+    --c: rgb(0, 188, 195);
+    color: #0000;
+    padding-bottom: var(--s);
+    background: linear-gradient(90deg,var(--c) 50%,#000 0) calc(100% - var(--_p,0%))/200% 100%, linear-gradient(var(--c) 0 0) 0% 100%/var(--_p,0%) var(--s) no-repeat;
+    -webkit-background-clip: text,padding-box;
+    background-clip: text,padding-box;
+    transition: 0.2s;
+</Styled>
+
+<Styled Classname="@_elements" PseudoClass="PseudoClasses.Hover">
+  --_p: 100%
+</Styled>
+
+<Styled @bind-Classname="@_elementsList">
+</Styled>
+
+<Styled @bind-Classname="@_removeButtonClass">
+        font-size: 15px;
+        white-space: nowrap;
+        background: rgb(83, 85, 175);
+        color: white;
+        font-weight: bold;
+        padding: 5px;
+        border-radius: 12px;
+        border-width: 0px;
+        box-sizing: content-box;
+        height: 15px;
+        width: 50px;
+</Styled>
+
+<div class="@InheritedClass @_container">
+    <div style="height: 160px; display: flex; margin-left: 1em; margin-top: 1em;">
+        <div style="margin: 2.5% 2.5%">
+            <IconNoMask IconName="ocr-selected" Height="135" Width="135" Margin="auto"/>
+        </div>
+        <div style="width: 40%; margin: auto 30px auto 20px;" class="@_chooseElementClass">Pliki do przetworzenia</div>
+    </div>
+    <hr style="margin-left: 2em; height: 5px; background: rgb(83, 85, 175); margin-right: 2em;">
+    <div class="@_elementsList">
+        @foreach (var file in FilesToLoad)
+        {
+            <div class="@_elements">
+                <button class="@_removeButtonClass" @onclick="@(_ => RemoveFile(file))">usuń</button> @file.Name
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string _container, _chooseElementClass, _elements, _elementsList, _removeButtonClass;
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<Task> SaveTemplate { get; set; }
+
+    [Parameter]
+    public Func<IBrowserFile, Task> RemoveFile { get; set; }
+
+    [Parameter]
+    public ISet<IBrowserFile> FilesToLoad { get; set; }
+}

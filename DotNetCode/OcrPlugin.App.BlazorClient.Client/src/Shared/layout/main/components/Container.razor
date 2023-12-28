@@ -1,0 +1,16 @@
+<Styled @bind-Classname="@_container">
+    flex: 1;
+    max-height: 100vh;
+    overflow: hidden;
+</Styled>
+
+<div class="@_container">
+    @ChildContent
+</div>
+
+@code {
+    private string _container;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

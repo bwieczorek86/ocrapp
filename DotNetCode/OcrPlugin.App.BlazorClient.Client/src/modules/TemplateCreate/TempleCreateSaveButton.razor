@@ -1,0 +1,36 @@
+<Styled @bind-Classname="@_saveButtonName">
+    cursor: pointer;
+    background: linear-gradient(90deg, rgb(62, 87, 239) 0%, rgb(0, 238, 170) 100%);
+    border-radius: 50px;
+    border-width: 0px;
+    box-sizing: content-box;
+    color: white;
+    display: inline-block;
+    font-size: 70px;
+    font-weight: bold;
+    height: 1em;
+    margin: auto 4.5em;
+    padding: 5px;
+    text-align: center;
+    white-space: nowrap;
+    width: 4.5em;
+    bottom: 50px;
+    position: absolute;
+</Styled>
+
+<Styled ClassName="@_saveButtonName" PseudoClass="PseudoClasses.Hover">
+    background: rgb(0, 188, 195);
+    opacity: 0.7;
+    box-shadow:0 7px 14px rgba(50,50,93,.1), 0 3px 6px rgba(0,0,0,.08);
+</Styled>
+
+<button type="submit" class="@_saveButtonName">
+    @Name
+</button>
+
+@code {
+    private string _saveButtonName;
+
+    [Parameter]
+    public string Name { get; set; }
+}

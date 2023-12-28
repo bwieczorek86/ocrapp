@@ -1,0 +1,51 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.modules.TemplateCreate.Cs
+@using OcrPlugin.App.BlazorClient.Client.src.modules.TemplateCreate.form
+
+@inject ITemplateTypeManager _templateTypeManager
+
+<Styled @bind-Classname="@_container">
+    position: relative;
+    flex-grow: 1;
+</Styled>
+
+<Styled @bind-Classname="@_headerName">
+    margin: auto 5%;
+    min-width: 450px;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    line-height: 40px;
+</Styled>
+
+<div class="@InheritedClass @_container">
+    <div style="height: 160px; display: flex;">
+        <div class="@_headerName">Stwórz nowy szablon</div>
+        <div style="margin: auto 20%    ;">
+            <IconNoMask IconName="template-cords-edit-choose" Height="150" Width="140" Margin="0px 0px 0px 20px"/>
+        </div>
+    </div>
+
+    <HrLine Width="95%"></HrLine>
+
+    <TemplateSettingsView
+        HandleValidSubmit="HandleValidSubmit"
+    />
+</div>
+
+@code {
+    private string _container, _headerName;
+    private TemplateSettingsView _templateSettingsView;
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<CreateTemplateModel, Task> HandleValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback<(string, bool)> OnClickCallback { get; set; }
+}

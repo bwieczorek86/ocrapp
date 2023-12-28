@@ -1,0 +1,28 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+
+<Styled @bind-Classname="@_className">
+    font-size: 25px;
+    display: flex;
+    margin: 0.5vw 1.5vw;
+    color: white;
+</Styled>
+
+<div class="@_className">
+    <div style="display: flex;">
+        <Icon IconName="@IconName" Height="36" Width="36" Margin="auto 30px 0px 10px"/>
+        <div style="margin: auto;">@Text</div>
+    </div>
+</div>
+
+@code {
+    private string _className;
+
+    [Parameter]
+    public string Text { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string IconName { get; set; }
+}

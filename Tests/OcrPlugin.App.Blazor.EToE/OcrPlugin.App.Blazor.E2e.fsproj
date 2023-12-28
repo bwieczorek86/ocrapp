@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>OcrPlugin.App.Blazor.E2e</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Common.fs" />
+        <Compile Include="PagesPaths.fs" />
+        <Compile Include="Authorization.fs" />
+        <Compile Include="Initial\Pages\HomePageTests.fs" />
+        <Compile Include="Initial\Pages\ListTemplateTests.fs" />
+        <Compile Include="Initial\Pages\TemplateOcrTests.fs" />
+        <Compile Include="Initial\Pages\SettingsPageTests.fs" />
+        <Compile Include="Tests.fs" />
+        <Compile Include="Args.fs" />
+        <Compile Include="Program.fs" />
+        <Content Include="readme.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Argu" Version="6.1.1" />
+        <PackageReference Include="canopy" Version="2.1.5" />
+        <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="92.0.4515.10700" />
+        <PackageReference Include="FSharp.Core" Version="5.0.1" />
+        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="xunit.runner.console" Version="2.4.1" />
+    </ItemGroup>
+
+</Project>

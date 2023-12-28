@@ -1,0 +1,94 @@
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@inject IJSRuntime _jsRunTime
+@inject SomethingChangedEvent _somethingChangedEvent
+
+<Styled @bind-Classname="@_className">
+    background: #5355AF;
+    margin: 10px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 25px;
+    padding: 5px !important;
+    border-radius: 15px;
+    border-width: 0px;
+    width: -webkit-fill-available;
+    display: block;
+    box-sizing: content-box;
+    height: 34px;
+</Styled>
+
+<Styled @bind-Classname="@_selectedClass">
+    background: rgb(0, 188, 195);
+</Styled>
+
+<Styled ClassName="@_className" PseudoClass="PseudoClasses.Hover">
+    background: rgb(0, 188, 195);
+</Styled>
+
+<Styled ClassName="@_className" PseudoClass="PseudoClasses.Before">
+    margin:0 0 0 5px;
+    transform:scaleX(-1);
+</Styled>
+
+<button id="ps-@Name" class="@_className @(Selected ? _selectedClass : string.Empty)" @onclick="@OnClick">
+    @L[@Name]
+</button>
+
+@code {
+    private string _className, _selectedClass;
+    private bool _wasDrawn;
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public bool Selected { get; set; }
+
+    [Parameter]
+    public bool ShouldDrawOnInit { get; set; }
+
+    [Parameter]
+    public EventCallback<(string, bool)> OnClickCallback { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.ResetSelectedProperties ? OnOtherPropertySelected(value) : Task.CompletedTask;
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.TemplateCordsSet ? OnTemplateCordsSet(value) : Task.CompletedTask;
+    }
+
+    private async Task OnOtherPropertySelected(string value)
+    {
+        Selected = false;
+        await Task.CompletedTask;
+
+        StateHasChanged();
+    }
+
+    private Task OnTemplateCordsSet(string value)
+    {
+        Selected = false;
+        _wasDrawn = false;
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task OnClick()
+    {
+        var @params = (Name, shouldSave: true);
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.ResetSelectedProperties, string.Empty);
+        await OnClickCallback.InvokeAsync(@params);
+        Selected = true;
+        StateHasChanged();
+    }
+
+    public async Task DrawLine()
+    {
+        if (!_wasDrawn && ShouldDrawOnInit)
+        {
+            await _jsRunTime.InvokeVoidAsync("MyLib.drawLine", $"ps-{Name}", $"r-{Name}");
+            _wasDrawn = true;
+        }
+    }
+}

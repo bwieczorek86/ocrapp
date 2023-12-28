@@ -1,0 +1,32 @@
+<Styled @bind-Classname="@ClassName">
+    min-width: @(Width)px;
+    width: @(Width)px;
+    height: @(Height)px;
+    -webkit-mask: url(/static/@(IconName).svg) 0px 0px no-repeat;
+    border: 0px none;
+    align-self: center;
+    margin: @(Margin);
+    -webkit-mask-size: @(Width)px @(Height)px;
+    background-color: @(BgColor);
+</Styled>
+
+<div class="@ClassName"></div>
+
+@code {
+    private string ClassName { get; set; }
+
+    [Parameter]
+    public string Width { get; set; }
+
+    [Parameter]
+    public string Height { get; set; }
+
+    [Parameter]
+    public string IconName { get; set; }
+
+    [Parameter]
+    public string Margin { get; set; }
+
+    [Parameter]
+    public string BgColor { get; set; } = "white";
+}

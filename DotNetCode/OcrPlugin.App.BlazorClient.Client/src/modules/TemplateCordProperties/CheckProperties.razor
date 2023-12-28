@@ -1,0 +1,103 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+
+@inject ITemplateTypeManager _templateTypeManager
+
+<Styled @bind-Classname="@_container">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: relative;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+</Styled>
+
+<div class="@InheritedClass @_container">
+    <div style="height: 160px; display: flex;">
+        <div style="width: 40%; margin: auto 20px auto 20px;" class="@_chooseElementClass">Sprawdź tekst</div>
+        <div style="margin: 2.5% 2.5% auto auto;">
+            <IconNoMask IconName="template-cords-edit-check" Height="170" Width="170" Margin="auto"/>
+        </div>
+    </div>
+    <HrLine Width="95%"></HrLine>
+    @if (_isLoading)
+    {
+        <LoadingOcr />
+    }
+    else
+    {
+        @if (_ocredProperties.IsEmpty())
+        {
+            @foreach (var propertyName in GetTypeProperties())
+            {
+                <TextToValidate PropertyName="@propertyName"/>
+            }
+        }
+        else
+        {
+            @foreach (var ocredProperty in _ocredProperties)
+            {
+                <TextToValidate PropertyName="@ocredProperty.Key" TextToDisplay="@ocredProperty.Value" IsPlaceholder="false"/>
+            }
+        }
+    }
+    <HrLine Width="95%"></HrLine>
+    <SaveButton Name="Potwierdź i zapisz" HandleValidSubmit="@SaveTemplate"/>
+</div>
+
+@code {
+    private string _container, _chooseElementClass;
+    private bool _isLoading;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<Task> SaveTemplate { get; set; }
+
+    private IDictionary<string, string> _ocredProperties = new Dictionary<string, string>();
+
+    public void UpdateProperties(IDictionary<string, string> ocredProperties)
+    {
+        _ocredProperties = ocredProperties;
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private IEnumerable<string> GetTypeProperties()
+    {
+        var typeProperties = _templateTypeManager.ResolveType(Template.Type)
+            .GetProperties()
+            .Select(prop => prop.Name)
+            .ToList();
+
+        if (Template.Settings.HasPublicId)
+        {
+            typeProperties.Remove(nameof(GeneralType.Nip));
+            typeProperties.Remove(nameof(GeneralType.Regon));
+            typeProperties.Remove(nameof(GeneralType.Pesel));
+        }
+        else
+        {
+            typeProperties.Remove(nameof(GeneralType.PublicId));
+        }
+
+        return typeProperties;
+    }
+
+    public void SetLoading()
+    {
+        _isLoading = true;
+        StateHasChanged();
+    }
+}

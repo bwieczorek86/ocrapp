@@ -1,0 +1,32 @@
+<Styled @bind-Classname="@_className">
+    font-size:100px;
+    margin: 0 auto;
+    text-align: center;
+    color: white;
+
+    .sidebar-collapse .@_className {
+        font-size: 20px;
+    }
+</Styled>
+
+<div style="margin-top: 1vh"></div>
+
+<a href="/templates/list" style="text-decoration: none">
+    @if (Collapsed)
+    {
+        <IconCollapsed IconName="logo" Margin="auto" BgColor="white"/> // collapsed
+    }
+    else
+    {
+        <Icon IconName="logo" Height="174" Width="430" Margin="auto" BgColor="white"/>
+    }
+</a>
+
+<div style="margin-bottom: 11vh"></div>
+
+@code {
+    private string _className;
+
+    [Parameter]
+    public bool Collapsed { get; set; }
+}

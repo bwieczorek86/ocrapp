@@ -1,0 +1,134 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using System.Runtime.InteropServices
+@using Newtonsoft.Json
+@using DebtorCase = OcrPlugin.App.BlazorClient.Shared.Reports.DebtorCase
+
+@inject IJSRuntime JsRuntime
+
+<Styled @bind-Classname="@_debtor">
+    display: inline-block;
+    padding: 5px 0px;
+    margin: 0px 15px;
+    color: #5355AF
+    font-weight: bold;
+    font-size: 20px;
+</Styled>
+
+<Styled @bind-Classname="@_selectDebtors">
+    border: none;
+    font-size: 25px;
+    color: rgb(83, 85, 175);
+    width: 100%;
+    margin-left: -4px;
+</Styled>
+
+<div style="display: grid">
+    <br/>
+    @if (SelectedCase.Debtors.Count <= 1)
+    {
+        <div class="@_debtor"
+             style="font-weight: bold;
+                color: rgb(83, 85, 175);
+                font-size: 30px;">
+            Znaleziono jednego dłużnika:
+        </div>
+    }
+    else
+    {
+        <div class="@_debtor"
+             style="font-weight: bold;
+                color: rgb(83, 85, 175);
+                font-size: 25px;">
+            Wybrany dłuznik:
+            <select @onchange="@(ChangeDebtor)" class="@_selectDebtors">
+                @foreach (var debtor in SelectedCase.Debtors)
+                {
+                    var value = $"{debtor.DebtorName} - {debtor.Identifier()}";
+                    <option value=@debtor.GetUniqueId()>@value</option>
+                }
+            </select>
+        </div>
+    }
+
+    <div class="@_debtor">
+        <div style="display: inline-block;
+                    width: 20%;
+                    border-right: 0px black solid;">Nazwa:</div>
+        <div style="display: inline-block; width: 72%;">
+            @SelectedDebtor.DebtorName
+        </div>
+    </div>
+
+    <div class="@_debtor">
+        <div style="display: inline-block;
+                    width: 20%;
+                    border-right: 0px black solid;">Adres:</div>
+        <div style="display: inline-block; width: 72%;">
+            @SelectedDebtor.Addresses.Select(c => c.ToString()).Aggregate((a, b) => $"{a} | {b}")
+        </div>
+    </div>
+
+    <div class="@_debtor">
+        <div style="display: inline-block;
+                    width: 20%;
+                    border-right: 0px black solid;">Identyfikator:</div>
+        <div style="display: inline-block; width: 72%;">
+            @SelectedDebtor.Identifier()
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(SelectedDebtor.Email))
+    {
+        <div class="@_debtor">
+            <div style="display: inline-block;
+                        width: 20%;
+                        border-right: 0px black solid;">Email:
+            </div>
+            <div style="display: inline-block; width: 72%;">
+                @SelectedDebtor.Email
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(SelectedDebtor.ContractId))
+    {
+        <div class="@_debtor">
+            <div style="display: inline-block;
+                        width: 20%;
+                        border-right: 0px black solid;">Nr sprawy:
+            </div>
+            <div style="display: inline-block; width: 72%;">
+                @SelectedDebtor.ContractId
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string _debtor, _selectDebtors;
+
+    [Parameter]
+    public DebtorInCaseDto SelectedDebtor {get;set;}
+
+    [Parameter]
+    public DebtorCase SelectedCase {get;set;}
+
+    [Parameter]
+    public Action<ChangeEventArgs> ChangeDebtor { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        //SimulateAddDebtorToSeeSuchExampleOnDebug();
+        return base.OnInitializedAsync();
+    }
+
+    private void SimulateAddDebtorToSeeSuchExampleOnDebug()
+    {
+        var debtipepti = SelectedCase.Debtors.FirstOrDefault()! with { ContractId = "qwe", DebtorName = "Test2" };
+        SelectedCase.Debtors.Add(debtipepti);
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,44 @@
+<Styled @bind-Classname="@_button">
+    background: #5355AF;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 25px;
+    padding: 6px 15px 8px 15px;
+    border-radius: 15px;
+    box-sizing: content-box;
+    border-width: 0px;
+    cursor: pointer;
+</Styled>
+
+@if (Description != null)
+{
+    <div style="margin-bottom: 10px;">
+        @((MarkupString)Description)
+    </div>
+}
+
+<div>
+    <button style="background: #5355AF; float: left; width: 40%;" @onclick="Close" class="@_button">Tak</button>
+    <button style="background: gray; float: right; width: 40%;" @onclick="Cancel" class="@_button">Nie</button>
+</div>
+
+@code {
+    private string _button;
+
+    [Parameter]
+    public string Description { get; set; }
+
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }
+
+    private async Task Close()
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(true));
+    }
+
+    private async Task Cancel()
+    {
+        await BlazoredModal.CancelAsync();
+    }
+}

@@ -1,0 +1,81 @@
+﻿@page "/template-create"
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.modules.TemplateCreate.Cs
+@using MainLayout = OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.MainLayout
+
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject IUrlCreator _urlCreator
+@inject NavigationManager _navigationManager
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_className">
+    display: flex;
+    background: linear-gradient(133deg, rgb(0, 188, 195) 0%, rgb(107, 63, 228) 100%);
+    margin: auto auto auto 25px;
+    min-height: 100vh;
+</Styled>
+
+<Styled @bind-Classname="@_element">
+    background: white;
+    border-radius: 10px;
+    height: 96vh;
+    margin: 17px;
+</Styled>
+
+<div class="@_className">
+    <ImageContainer @ref="_imageContainerRef"
+        InheritedClass="@_element"
+
+    />
+    <TemplateSettings InheritedClass="@_element"
+        HandleValidSubmit="HandleValidSubmit"
+    />
+</div>
+@code{
+    private string _className, _element;
+    private ImageContainer _imageContainerRef;
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Layout.SiteMenuCollapsed = true;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit(CreateTemplateModel createTemplateModel)
+    {
+        var template = new TemplateDto
+        {
+            Name = createTemplateModel.Name,
+            Properties = createTemplateModel.Properties,
+            TitleTemplateMappings = createTemplateModel.TitleTemplateMappings.Select(tm => new TitleTemplateMappings { Title = tm.Title }).ToList(),
+            Type = nameof(GeneralType),
+            FileName = $"{Guid.NewGuid().ToString()}{ Path.GetExtension(_imageContainerRef.FileToUploadName)}",
+            IsActive = createTemplateModel.IsActive,
+            Settings = createTemplateModel.Settings,
+            FileBase64 = _imageContainerRef.FileToUploadBase64
+        };
+
+        using var form = new MultipartFormDataContent();
+        var multiContent = new MultipartFormDataContent();
+
+        multiContent.Add(JsonContent.Create(template), "Template");
+        
+        var response = await _httpWrapper.PostAsyncWithContentAndResponse("api/Templates/create", multiContent);
+
+        if (response.IsSuccessStatusCode)
+        {
+            string url = _urlCreator.CreateRelative(createTemplateModel.Name);
+            _navigationManager.NavigateTo($"{Urls.TemplatePage}/{url}");
+        }
+    }
+}

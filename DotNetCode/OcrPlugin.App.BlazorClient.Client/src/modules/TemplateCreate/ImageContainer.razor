@@ -1,0 +1,196 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using System.Drawing
+@using Blazored.LocalStorage
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using System.Runtime.InteropServices
+
+@implements IAsyncDisposable
+
+@inject IJSRuntime JSRuntime
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject BlobUriBuilder _blobUriBuilder
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_documentPreview">
+    margin-left: 40px;
+    min-width: 780px;
+    max-width: 780px;
+    flex-grow: 1;
+</Styled>
+
+<Styled @bind-Classname="@_customFileUpload">
+    padding: 0px;
+    cursor: pointer;
+    width: 90%;
+    height: 94%;
+    text-align: center;
+    margin: 30px;
+    border: 5px dotted rgb(132, 132, 202);
+    display: flex;
+    flex-direction: column;
+</Styled>
+
+<Styled @bind-Classname="@_upperIcon">
+    display: flex;
+    min-height: 385px;
+    margin: 20px 0 0 0;
+</Styled>
+
+<Styled @bind-Classname="@_upperText">
+    text-align: center;
+    font-weight: bold;
+    color: rgb(83, 85, 175);
+    font-size: 45px;
+    white-space: nowrap;
+    letter-spacing: 3px;
+    align-content: stretch;
+    justify-content: space-around;
+    margin: 30px auto 0 auto;
+</Styled>
+
+<Styled @bind-Classname="@_middleText">
+    margin: 20px auto;
+    text-align: center;
+    color: rgb(83, 85, 175);
+    font-size: 35px;
+    white-space: nowrap;
+    display: inline-block;
+    align-self: flex-end;
+</Styled>
+
+<Styled @bind-Classname="@_bottomButton">
+    margin: -5px 1.5em;
+    text-align: center;
+    font-size: 35px;
+    white-space: nowrap;
+    display: inline-block;
+    align-self: flex-end;
+    background: rgb(83, 85, 175);
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 12px;
+    border-width: 0px;
+    width: -webkit-fill-available;
+    box-sizing: content-box;
+    height: 40px;
+</Styled>
+
+<div class="@InheritedClass @_documentPreview">
+    @if (_imageUri == null)
+    {
+        <label @ref="_fileDropContainer" for="file-upload" class="@_customFileUpload">
+
+            <div class="@_upperIcon">
+                <OcrIconFly IconName="add-template.png" Height="270" Width="240" Margin="20px auto"/>
+            </div>
+            <div class="@_upperText">Przeciągnij i upuść tutaj</div>
+            <div class="@_middleText">lub</div>
+            <div class="@_bottomButton">Wczytaj pliki z komputera</div>
+        </label>
+
+    }
+    else
+    {
+        <img alt="Podgląd pliku"
+             width="@CustomImageScaleWidth"
+             height="@CustomImageScaleHeight"
+             src="@_imageUri"
+             style="margin-left: 10px; margin-top: 3px; position: absolute;"/>
+    }
+
+    <InputFile id="file-upload" class="custom-file-input" style="display: none" OnChange="@LoadFiles" @ref="@_inputFile"></InputFile>
+
+</div>
+
+@code {
+    [Parameter]
+    public string InheritedClass { get; set; }
+    private ElementReference _fileDropContainer;
+    private string _customFileUpload, _upperIcon, _upperText, _middleText, _bottomButton;
+
+    private double ScaleForX { get; set; }
+    private double ScaleForY { get; set; }
+    private string SelectedProperty { get; set; }
+
+    private InputFile _inputFile;
+    public string FileToUploadBase64 { get; set; }
+    public string FileToUploadName { get; set; }
+
+    IJSObjectReference _module;
+    IJSObjectReference _dropZoneInstance;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/dropZone.js");
+            _dropZoneInstance = await _module.InvokeAsync<IJSObjectReference>("initializeFileDropZone", _fileDropContainer, _inputFile.Element);
+        }
+    }
+
+    private string _documentPreview;
+
+    private int CustomImageScaleWidth { get; } = 760;
+    private int CustomImageScaleHeight { get; } = 905;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dropZoneInstance != null)
+        {
+            await _dropZoneInstance.DisposeAsync();
+        }
+
+        if (_module != null)
+        {
+            await _module.DisposeAsync();
+        }
+    }
+
+    private string _imageUri;
+    private async Task LoadFiles(InputFileChangeEventArgs inputFileChangeEventArgs)
+    {
+        var file = inputFileChangeEventArgs.File;
+        using MemoryStream ms = new();
+        
+        if (file.Name.EndsWith(".pdf"))
+        {
+            var image = await ConvertPdfToImage(file);
+            await image.CopyToAsync(ms);
+            FileToUploadBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        else
+        {
+            var image = await inputFileChangeEventArgs.File.RequestImageFileAsync("image/png", CustomImageScaleWidth, CustomImageScaleHeight);
+            FileToUploadName = inputFileChangeEventArgs.File.Name;
+
+            await using var imageStream = image.OpenReadStream(1024 * 1024 * 10);
+            
+            await imageStream.CopyToAsync(ms);
+            FileToUploadBase64 = Convert.ToBase64String(ms.ToArray());
+        }
+        
+        _imageUri = $"data:image/png;base64,{FileToUploadBase64}";
+        StateHasChanged();
+    }
+    
+    private async Task<Stream> ConvertPdfToImage(IBrowserFile browserFile)
+    {
+        var multiContent = new MultipartFormDataContent();
+        multiContent.Add(new StreamContent(browserFile.OpenReadStream()), "file", browserFile.Name);
+
+        var response = await _httpWrapper.PostAsyncWithContentAndResponse("api/Templates/convert-to-image", multiContent);
+        if (response.IsSuccessStatusCode)
+        {
+            using MemoryStream ms = new();
+            var content = await response.Content.ReadAsStreamAsync();
+            return content;
+        }
+        
+        return null;
+    }
+}

@@ -1,0 +1,14 @@
+<Styled @bind-Classname="@_textToValidate">
+    height: 412px;
+    margin: 10px;
+    padding: 5px;
+    position: relative;
+</Styled>
+
+<div class="@_textToValidate">
+    <Loading />
+</div>
+
+@code {
+    private string _textToValidate;
+}

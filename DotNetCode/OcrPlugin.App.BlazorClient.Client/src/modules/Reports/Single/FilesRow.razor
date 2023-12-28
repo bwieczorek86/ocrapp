@@ -1,0 +1,102 @@
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using Microsoft.Azure.Documents.SystemFunctions
+@using OcrPlugin.App.Common
+
+@inject BetterNavigationManager _navigation
+
+<Styled @bind-Classname="@_containerDisabled">
+    display: flex;
+    border-bottom: 1px solid #d6d5d5;
+    color: grey;
+</Styled>
+
+<Styled @bind-Classname="@_container">
+    display: flex;
+    border-bottom: 1px solid #d6d5d5;
+    cursor: pointer;
+
+    --s: 0.1em;   /* the thickness of the line */
+    --c: rgb(0, 188, 195);
+    color: #0000;
+    padding-bottom: var(--s);
+    background: linear-gradient(90deg,var(--c) 50%,#000 0) calc(100% - var(--_p,0%))/200% 100%, linear-gradient(var(--c) 0 0) 0% 100%/var(--_p,0%) var(--s) no-repeat;
+    -webkit-background-clip: text,padding-box;
+    background-clip: text,padding-box;
+    transition: 0.2s;
+</Styled>
+
+<Styled Classname="@_container" PseudoClass="PseudoClasses.Hover">
+  --_p: 100%
+</Styled>
+
+<Styled @bind-Classname="@_nameColumn">
+    margin-top: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 75%
+</Styled>
+
+<Styled @bind-Classname="@_statusColumn">
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 15%
+</Styled>
+
+<Styled @bind-Classname="@_text">
+    font-size: 24px;
+</Styled>
+
+<Styled @bind-Classname="@_loadingSvg">
+    position: absolute;
+    width: 27px;
+    top: 6px;
+</Styled>
+
+<div class="@(SingleReportFile.Status == Consts.FileProcessingStatus.Processed
+                ? _container
+                : _containerDisabled)"
+     @onclick="OpenReport" @onmouseup="OpenReport">
+
+    <div class="@_nameColumn" style="width: 5%">
+        <span class="@_text">@SingleReportFile.Iterator</span>
+    </div>
+
+    <div class="@_nameColumn">
+        <span class="@_text">@SingleReportFile.FileName</span>
+    </div>
+
+    <div class="@_statusColumn">
+        @if (SingleReportFile.Status == Consts.FileProcessingStatus.Processing)
+        {
+            <div style="width: 20%; position: relative;">
+                <LoadingSmall class="@_loadingSvg"/>
+            </div>
+        }
+        else
+        {
+            <div style="margin-top: 10px;">
+                <span class="@_text">@SingleReportFile.Status</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string _container, _containerDisabled, _nameColumn, _text, _statusColumn, _loadingSvg;
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    [Parameter]
+    public SingleReportFile SingleReportFile { get; set; }
+
+    private async Task OpenReport(MouseEventArgs e)
+    {
+        if (SingleReportFile.Status == Consts.FileProcessingStatus.Processed)
+        {
+            await _navigation.NavigateTo($"/reports/{ReportId}/{SingleReportFile.FileNameOnDisc}", newTab: e.IsMiddleClickClicked());
+        }
+    }
+}

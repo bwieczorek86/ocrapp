@@ -1,0 +1,83 @@
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using OcrPlugin.App.Common
+<Styled @bind-Classname="@_outerBox">
+    border: 8px solid rgb(71, 136, 199);
+    border-radius: 15px;
+    margin: auto 120px 10px 65px;
+    display: flex;
+    flex-direction: column;
+    height: 101px;
+    justify-content: center;
+</Styled>
+
+<Styled @bind-Classname="@_innerbox">
+    margin: 5px 25px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+</Styled>
+
+<Styled @bind-Classname="@_button">
+    align-self: center;
+</Styled>
+
+<div class="@_outerBox">
+    <div class="@_innerbox">
+        <div style="flex-grow: 1">
+            <div> Id: @Report.Id </div>
+            <div> Data: @Report.DateTime.ToString("yyyy-MM-dd hh:mm")</div>
+            <div> Użytkownik: @Report.UserName </div>
+        </div>
+        <div style="flex-grow: 2">
+            <div> Pliki gotowe: @Report.ReportFiles.Count(c => c.Status == Consts.FileProcessingStatus.Processed) / @Report.ReportFiles.Count</div>
+            <div> Pliki do weryfikacji: @Report.ReportFiles.Count(c => c.Status != Consts.FileProcessingStatus.Processed && c.Status != Consts.FileProcessingStatus.Processing)</div>
+            <div> Pliki błędne: @Report.ReportFiles.Count(c => c.Status == "Do weryfikacji")</div>
+        </div>
+        <div style="flex-grow: 1; align-self: center;">
+            <StandardButton HandleValidSubmit="@HandleValidSubmit" Name="Wyślij" ClassName="@_button"/>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _outerBox, _innerbox, _column, _button;
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public SingleReportDto Report { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        var modalParameters = new ModalParameters();
+        modalParameters.Add(nameof(ConfirmationModal.Description), "Akcja uniemożliwi dokonania dalszych zmian w raporcie<br>oraz wyśle wszystkie dane do systemu Softlex.");
+
+        var confirmationModal = Modal.Show<ConfirmationModal>(
+            title: "Czy na pewno chcesz zapisać raport?",
+            options: new ModalOptions
+            {
+                Animation = ModalAnimation.FadeIn(0.3),
+                DisableBackgroundCancel = true,
+                HideCloseButton = true,
+            }, parameters: modalParameters );
+
+        var result = await confirmationModal.Result;
+
+        if (result.Cancelled)
+        {
+            return;
+        }
+        else
+        {
+            await SaveReport();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SaveReport()
+    {
+        await Task.CompletedTask;
+    }
+}

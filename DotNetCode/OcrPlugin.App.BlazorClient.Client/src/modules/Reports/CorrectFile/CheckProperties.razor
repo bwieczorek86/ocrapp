@@ -1,0 +1,125 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using System.Runtime.InteropServices
+@using Newtonsoft.Json
+@using DebtorCase = OcrPlugin.App.BlazorClient.Shared.Reports.DebtorCase
+
+@inject IJSRuntime JsRuntime
+
+<Styled @bind-Classname="@_container">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: relative;
+    max-width: 800px;
+    min-width: 800px;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+</Styled>
+
+<div class="@InheritedClass @_container" id="report-fix-properties">
+    <div style="height: 160px; display: flex;">
+        <div style="margin: 2.5%">
+            <IconNoMask IconName="template-cords-edit-check" Height="170" Width="170" Margin="auto"/>
+        </div>
+        <div style="width: 40%; margin: auto 20px auto 20px;" class="@_chooseElementClass">Sprawdź tekst</div>
+    </div>
+
+    <hr style="width: auto; height: 5px; background: rgb(83, 85, 175); margin: 8px 15px;">
+
+    <OcredProperties Template="Template" OcrResult="OcrResult" />
+
+    <CaseInfo Cases="OcrResult.Contracts" ChangeCase="@ChangeCase"/>
+
+    <DebtorInfo SelectedCase="SelectedCase" ChangeDebtor="@ChangeDebtor" SelectedDebtor="@SelectedDebtor" />
+
+    <SaveButton Name="Potwierdź i zapisz" HandleValidSubmit="@SaveOcrReport"/>
+</div>
+
+@code {
+    private string _container, _chooseElementClass;
+
+    private DebtorInCaseDto SelectedDebtor {get;set;}
+    private DebtorCase SelectedCase {get;set;}
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public OcrResult OcrResult { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        // nie ma kontraktów, prawdopodobnie błąd, musimy wprowadzić ręcznie
+        if (!OcrResult.Contracts.Any())
+        {
+        }
+        else
+        {
+            var numberOfContractsWithoutContractId = OcrResult.Contracts.Count(c => string.IsNullOrWhiteSpace(c.ContractId));
+            var allDebtors = OcrResult.Contracts.SelectMany(c => c.Debtors);
+
+            // jest kontrakt bez id ale z debtorami, wiec nie znalezlismy sprawy ale debtorow
+            if (numberOfContractsWithoutContractId == 1 && allDebtors.Any())
+            {
+                SelectedCase = OcrResult.Contracts.First();
+                SelectedDebtor = OcrResult.Contracts.First().Debtors.FirstOrDefault();
+            }
+
+            // mamy konktratId
+            if (numberOfContractsWithoutContractId == 0 && OcrResult.Contracts.Any())
+            {
+                SelectedCase = OcrResult.Contracts.First();
+                SelectedDebtor = OcrResult.Contracts.First().Debtors.FirstOrDefault();
+            }
+        }
+
+        // SimulateAddCaseToSeeSuchExampleOnDebug();
+        return base.OnInitializedAsync();
+    }
+
+    private void SimulateAddCaseToSeeSuchExampleOnDebug()
+    {
+        var @case = OcrResult.Contracts.FirstOrDefault()! with
+        {
+            ContractId = "qwe3",
+            Debtors = new List<DebtorInCaseDto>()
+            {
+                OcrResult.Contracts.FirstOrDefault()!.Debtors.FirstOrDefault()! with { DebtorName = "Nowa sprawa debtor", ContractId = "qwe3"}
+            }
+        };
+        OcrResult.Contracts.Add(@case);
+        StateHasChanged();
+    }
+
+    private void ChangeCase(ChangeEventArgs e)
+    {
+        SelectedCase = OcrResult.Contracts.First(c => c.ContractId == (string)e.Value);
+        SelectedDebtor = SelectedCase.Debtors.FirstOrDefault();
+
+        StateHasChanged();
+    }
+
+    private void ChangeDebtor(ChangeEventArgs e)
+    {
+        SelectedDebtor = OcrResult.Contracts.First(c => c.ContractId == SelectedCase.ContractId).Debtors.First(c => c.GetUniqueId() == (string)e.Value);
+
+        StateHasChanged();
+    }
+
+    private async Task SaveOcrReport()
+    {
+
+    }
+}

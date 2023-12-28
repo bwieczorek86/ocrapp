@@ -1,0 +1,14 @@
+{
+    "version": "2.0",
+    "logging": {
+        "logLevel": {
+            "OcrPlugin": "Information"
+        },
+        "applicationInsights": {
+            "samplingSettings": {
+                "isEnabled": true,
+                "excludedTypes": "Request"
+            }
+        }
+    }
+}

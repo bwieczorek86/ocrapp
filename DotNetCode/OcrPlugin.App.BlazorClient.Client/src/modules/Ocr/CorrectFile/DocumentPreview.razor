@@ -1,0 +1,58 @@
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+
+@inject TokenService _tokenService
+@inject BlobUriBuilder _blobUriBuilder
+
+<Styled @bind-Classname="@_documentPreview">
+    margin-left: 40px;
+    min-width: 780px;
+    max-width: 780px;
+    flex-grow: 1;
+</Styled>
+
+<div class="@InheritedClass @_documentPreview" id="report-preview-template">
+    <img alt="Podgląd szablonu"
+         width="@CustomImageScaleWidth"
+         height="@CustomImageScaleHeight"
+         src="@_blobUri"
+         style="margin-left: 10px; margin-top: 3px; position: absolute;"/>
+</div>
+
+@code {
+    private string _blobUri;
+}
+
+@code {
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    private double ScaleForX { get; set; }
+    private double ScaleForY { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Template != null)
+        {
+            await SetDocumentPreview(Template);
+        }
+    }
+
+    public async Task SetDocumentPreview(Template template)
+    {
+        await _tokenService.CheckIfTokenIsNotExpired();
+        _blobUri = await _blobUriBuilder.GetTemplateBlobUri(Template.FileName, false);
+
+        ScaleForX = Template.TemplateImageSize.Width / (double)CustomImageScaleWidth;
+        ScaleForY = Template.TemplateImageSize.Height / (double)CustomImageScaleHeight;
+    }
+
+    private string _documentPreview;
+
+    private int CustomImageScaleWidth { get; } = 760;
+    private int CustomImageScaleHeight { get; } = 905;
+}

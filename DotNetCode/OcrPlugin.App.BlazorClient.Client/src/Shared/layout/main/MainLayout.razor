@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.components.siteMenu
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.components
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+<CascadingValue Value="@this">
+    <div style="position: relative; display: flex; flex-direction: row;">
+        <SiteMenu />
+        <Container>
+            @Body
+        </Container>
+    </div>
+</CascadingValue>
+
+@code
+{
+    public bool SiteMenuCollapsed {get; set;}
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var userdata = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "user")
+            .ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(userdata))
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+    }
+}

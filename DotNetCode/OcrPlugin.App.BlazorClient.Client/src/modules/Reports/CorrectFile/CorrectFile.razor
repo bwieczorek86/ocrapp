@@ -1,0 +1,66 @@
+@page "/reports/{ReportId}/{FileId}"
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using MainLayout = OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.MainLayout
+
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_className">
+    display: flex;
+    background: linear-gradient(133deg, rgb(0, 188, 195) 0%, rgb(107, 63, 228) 100%);
+    margin: auto auto auto 25px;
+    min-height: 100vh;
+</Styled>
+
+@if (_loading)
+{
+    <Loading />
+}
+else
+{
+    <div class="@_className">
+        <CorrectFileView Template="Template" OcrResult="OcrResult" @ref="@_correctFileView"/>
+    </div>
+}
+
+@code{
+    private bool _loading = true;
+    private string _className;
+    private CorrectFileView _correctFileView;
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    [Parameter]
+    public string FileId { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    private Template Template { get; set; } = new Template();
+
+    private OcrResult OcrResult { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Layout.SiteMenuCollapsed = true;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        OcrResult = await GetOcrResult();
+
+        Template = await _httpWrapper.GetFromJsonAsync<Template>($"api/Templates/{OcrResult.TemplateName}");
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task<OcrResult> GetOcrResult()
+    {
+        var requestMsg = new HttpRequestMessage(HttpMethod.Get, $"api/Reports/{ReportId}/{FileId}");
+
+        return await _httpWrapper.GetAsync<OcrResult>(requestMsg, _ => ValueTask.CompletedTask);
+    }
+}

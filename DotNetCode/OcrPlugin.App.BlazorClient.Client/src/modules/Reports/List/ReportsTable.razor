@@ -1,0 +1,30 @@
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+
+<Styled @bind-Classname="@_outerBox">
+    border: 8px solid rgb(71, 136, 199);
+    border-radius: 15px;
+    margin: auto 120px auto 65px;
+    display: flex;
+    flex-direction: column;
+</Styled>
+
+<Styled @bind-Classname="@_innerBox">
+    margin: 5px 25px;
+</Styled>
+
+<div class="@_outerBox">
+    <div class="@_innerBox">
+        <ReportsTableHeader></ReportsTableHeader>
+        @foreach (var report in Reports)
+        {
+            <ReportsTableRow ReportListDto="@report"></ReportsTableRow>
+        }
+    </div>
+</div>
+
+@code {
+    private string _outerBox, _innerBox;
+
+    [Parameter]
+    public IList<ReportListDto> Reports { get; set; }
+}

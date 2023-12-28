@@ -1,0 +1,41 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using System.Drawing
+@using System.IO
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+
+@inject OcrApi _ocrApi
+@inject IHttpWrapper _httpWrapper
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_element">
+    background: white;
+    border-radius: 10px;
+    height: 96vh;
+    margin: 17px;
+</Styled>
+
+<DocumentPreview InheritedClass="@_element"
+                 Template="@Template"
+                 OcrResult="@OcrResult"
+/>
+<CheckProperties InheritedClass="@_element"
+                 Template="@Template"
+                 OcrResult="@OcrResult"
+/>
+
+@code {
+    private string _element;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public OcrResult OcrResult { get; set; }
+
+    [Parameter]
+    public bool Failed { get; set; }
+}

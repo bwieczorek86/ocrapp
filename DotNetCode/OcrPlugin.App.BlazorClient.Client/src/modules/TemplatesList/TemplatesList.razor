@@ -1,0 +1,102 @@
+@page "/templates/list"
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.navbar
+@using OcrPlugin.App.BlazorClient.Client.Common
+
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject IHttpWrapper _httpWrapper
+@inject NavigationManager _navigation
+
+<Styled @bind-Classname="@_className">
+    display: flex;
+    justify-content: center;
+    margin-left: -6vh;
+    margin-top: 100px;
+</Styled>
+
+<NavBar />
+<div class="@_className">
+    @if (_filtredTemplatesChunked.Any())
+    {
+        var templates = _filtredTemplatesChunked.ElementAt(_currentChunk);
+        @foreach (var template in templates)
+        {
+            <TemplateMiniatureContainer Template="@template"/>
+        }
+        if (_filtredTemplatesChunked.Count > 1)
+        {
+            <ArrowNextButton OnClick=@Next/>
+        }
+    }
+</div>
+
+@code {
+    private string _className;
+    private int _currentChunk;
+
+    private IList<Template> _templatesChunked = new List<Template>();
+    private IList<Template[]> _filtredTemplatesChunked = new List<Template[]>(0);
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _tokenService.CheckIfTokenIsNotExpired();
+
+        Layout.SiteMenuCollapsed = false;
+
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.Search ? OnSearchChanged(value) : Task.CompletedTask;
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.TemplateDeleted ? OnTemplateDeleted(value) : Task.CompletedTask;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        var requestMsg = new HttpRequestMessage(HttpMethod.Get, "api/Templates/GetAll");
+        _templatesChunked = await _httpWrapper.GetAsync<IList<Template>>(requestMsg, _ => ValueTask.CompletedTask);
+
+        if (_templatesChunked != null)
+        {
+            _filtredTemplatesChunked = _templatesChunked.Chunk(4).ToList();
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnTemplateDeleted(string templateName)
+    {
+        var templateToRemove = _templatesChunked.FirstOrDefault(c => c.Name == templateName);
+        _templatesChunked.Remove(templateToRemove);
+        _filtredTemplatesChunked = _templatesChunked.Chunk(4).ToList();
+
+        if (_currentChunk >= _filtredTemplatesChunked.Count)
+        {
+            _currentChunk -= 1;
+        }
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task OnSearchChanged(string value)
+    {
+        _currentChunk = 0;
+        _filtredTemplatesChunked = _templatesChunked.Where(c => c.Name.ToUpperInvariant().Contains(value.ToUpperInvariant()))
+                                                    .Chunk(4)
+                                                    .ToList();
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private void Next()
+    {
+        _currentChunk += 1;
+        if (_filtredTemplatesChunked.Count <= _currentChunk)
+        {
+            _currentChunk = 0;
+        }
+        StateHasChanged();
+    }
+}

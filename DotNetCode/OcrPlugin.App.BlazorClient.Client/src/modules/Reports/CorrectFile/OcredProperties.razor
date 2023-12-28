@@ -1,0 +1,91 @@
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+
+@inject ITemplateTypeManager _templateTypeManager
+
+<Styled @bind-Classname="@_hiddenPropertiesDiv">
+    transition: opacity 0.3s linear;
+    position: absolute;
+    width: 100%;
+    background: white;
+    visibility: visible;
+    opacity: 1;
+</Styled>
+
+<Styled @bind-Classname="@_toggleButton">
+    width: 96%;
+    margin-left: 15px;
+    height: 40px;
+    background: rgb(83, 85, 175);
+    border: 0;
+    border-radius: 50px;
+    color: white;
+    font-weight: 600;
+    font-size: 20px;
+</Styled>
+
+<Styled @bind-Classname="@_ocredPropertiesClass">
+    visibility: hidden !important;
+    opacity: 0 !important;
+    transition: visibility 0s 0.3s, opacity 0.3s linear !important;
+</Styled>
+
+<button class="@_toggleButton" onclick="@ToggleShouldShowOcredProperties"> @(ShouldShowOcredProperties ? "Schowaj zocrowane pola" : "Pokaż zocrowane pola" ) </button>
+<div style="overflow: hidden">
+    <div class="@_hiddenPropertiesDiv @(ShouldShowOcredProperties ? "" : _ocredPropertiesClass)">
+        @foreach (var property in GetTypeProperties())
+        {
+            <TextToValidate PropertyName="@property.Key" TextToDisplay="@property.Value" />
+        }
+
+        <hr style="width: auto; height: 5px; background: rgb(83, 85, 175); margin: 8px 15px;">
+    </div>
+</div>
+
+<hr style="width: auto; height: 5px; background: rgb(83, 85, 175); margin: 8px 15px;">
+
+
+@code {
+    private string _ocredPropertiesClass, _toggleButton, _hiddenPropertiesDiv;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public OcrResult OcrResult { get; set; }
+
+    private bool ShouldShowOcredProperties = false;
+
+    private IDictionary<string, string> GetTypeProperties()
+    {
+        var typePropertyNames = _templateTypeManager.ResolveType(Template.Type)
+            .GetProperties()
+            .Select(prop => prop.Name)
+            .ToList();
+
+        if (Template.Settings.HasPublicId)
+        {
+            typePropertyNames.Remove(nameof(GeneralType.Nip));
+            typePropertyNames.Remove(nameof(GeneralType.Regon));
+            typePropertyNames.Remove(nameof(GeneralType.Pesel));
+        }
+        else
+        {
+            typePropertyNames.Remove(nameof(GeneralType.PublicId));
+        }
+
+        return typePropertyNames.Select(propertyName =>
+        {
+            var text = OcrResult.CorrectedModels.FirstOrDefault(x => x.PropertyName == propertyName)?.GetText() ?? string.Empty;
+
+            return new Tuple<string, string>(propertyName, text);
+        }).ToDictionary(c => c.Item1, z => z.Item2);
+    }
+
+    private void ToggleShouldShowOcredProperties()
+    {
+        ShouldShowOcredProperties = !ShouldShowOcredProperties;
+        StateHasChanged();
+    }
+}

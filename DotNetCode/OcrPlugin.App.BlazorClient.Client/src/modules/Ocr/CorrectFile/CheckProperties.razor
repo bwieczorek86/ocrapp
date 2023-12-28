@@ -1,0 +1,94 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+
+@inject ITemplateTypeManager _templateTypeManager
+
+<Styled @bind-Classname="@_container">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: relative;
+    max-width: 800px;
+    min-width: 800px;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+</Styled>
+
+<div class="@InheritedClass @_container" id="report-fix-properties">
+    <div style="height: 160px; display: flex;">
+        <div style="margin: 2.5%">
+            <IconNoMask IconName="template-cords-edit-check" Height="170" Width="170" Margin="auto"/>
+        </div>
+        <div style="width: 40%; margin: auto 20px auto 20px;" class="@_chooseElementClass">Sprawdź tekst</div>
+    </div>
+    <hr style="width: auto; height: 5px; background: rgb(83, 85, 175); margin: 8px 15px;">
+    @if (_isLoading)
+    {
+        <LoadingOcr />
+    }
+    else
+    {
+        @foreach (var property in GetTypeProperties())
+        {
+            <TextToValidate PropertyName="@property" TextToDisplay="" />
+        }
+    }
+    <hr style="width: auto; height: 5px; background: rgb(83, 85, 175); margin: 8px 15px;">
+</div>
+
+@code {
+    private string _container, _chooseElementClass;
+    private bool _isLoading = true;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<Task> SaveTemplate { get; set; }
+
+    private IDictionary<string, string> _ocredProperties = new Dictionary<string, string>();
+
+    private IEnumerable<string> GetTypeProperties()
+    {
+        var typeProperties = _templateTypeManager.ResolveType(Template.Type)
+            .GetProperties()
+            .Select(prop => prop.Name)
+            .ToList();
+
+        if (Template.Settings.HasPublicId)
+        {
+            typeProperties.Remove(nameof(GeneralType.Nip));
+            typeProperties.Remove(nameof(GeneralType.Regon));
+            typeProperties.Remove(nameof(GeneralType.Pesel));
+        }
+        else
+        {
+            typeProperties.Remove(nameof(GeneralType.PublicId));
+        }
+
+        return typeProperties;
+    }
+
+    public void SetLoading()
+    {
+        _isLoading = true;
+        StateHasChanged();
+    }
+
+    public void ChangeState(Template template)
+    {
+        Template = template;
+        _isLoading = false;
+        StateHasChanged();
+    }
+}

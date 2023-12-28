@@ -1,0 +1,134 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components
+@using Microsoft.AspNetCore.Components
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Utils
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+
+@inject IUrlCreator _urlCreator
+@inject NavigationManager _navigationManager
+@inject SomethingChangedEvent _changedEvent
+@inject IHttpWrapper _httpWrapper
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_hamburger">
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    display: flex;
+</Styled>
+
+<Styled @bind-Classname="@_menu">
+    display: grid;
+    margin-right: -1px;
+</Styled>
+
+<div class="@_hamburger" @onmouseenter="OnMouseOver" @onmouseleave="@OnMouseOut" @onmouseleave:stopPropagation="true">
+    <div class="@_menu" @onmouseenter="OnMouseOver" @onmouseleave="@OnMouseOut"  @onmouseleave:stopPropagation="true">
+        @if (_isHovering)
+        {
+            <HamburgerButton Title=@L["Ocr"]
+                             OnClick="@(async () => await NavigateToOcr(Template.Name))"
+                             OnMouseOut="@OnMouseOut"
+                             OnMouseOver="@OnMouseOver" />
+            <HamburgerButton Title=@L["Edit"]
+                             OnClick="@(() => NavigateToEdit(Template.Name))"
+                             OnMouseOut="@OnMouseOut"
+                             OnMouseOver="@OnMouseOver" />
+
+            @if (Template.IsActive)
+            {
+                <HamburgerButton Title=@L["Deactivate"]
+                                 OnClick="@(async () => await Deactivate(Template))"
+                                 OnMouseOut="@OnMouseOut"
+                                 OnMouseOver="@OnMouseOver" />
+            }
+            else
+            {
+                <HamburgerButton Title=@L["Activate"]
+                                 OnClick="@(async () => await Activate(Template))"
+                                 OnMouseOut="@OnMouseOut"
+                                 OnMouseOver="@OnMouseOver" />
+            }
+
+            <HamburgerButton Title=@L["Delete"]
+                             OnClick="@(async () => await Delete(Template))"
+                             ConfirmationMessage="@L["TemplateList_DoYouWantToRemoveTemplate"]"
+                             OnMouseOut="@OnMouseOut"
+                             OnMouseOver="@OnMouseOver" />
+        }
+    </div>
+    <div>
+        <Icon IconName="template-list-gear" Width="64" Height="64" BgColor="@(Template.IsActive ? "rgb(71, 136, 199)" : "#B0BEC5")"/>
+    </div>
+</div>
+
+@code {
+    private string _hamburger, _menu;
+    private bool _isHovering = false;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public Action<bool> ToggleIsActive { get; set; }
+
+    private void OnMouseOver(MouseEventArgs mouseEvent)
+    {
+        if (!_isHovering)
+        {
+            _isHovering = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnMouseOut()
+    {
+        _isHovering = false;
+        StateHasChanged();
+    }
+
+    private async Task Deactivate(Template template)
+    {
+        template.IsActive = false;
+        ToggleIsActive(template.IsActive);
+        await _httpWrapper.PostAsync($"api/templates/deactivate/{template.Name}");
+
+        StateHasChanged();
+    }
+
+    private async Task Activate(Template template)
+    {
+        template.IsActive = true;
+        ToggleIsActive(template.IsActive);
+        await _httpWrapper.PostAsync($"api/templates/activate/{template.Name}");
+
+        StateHasChanged();
+    }
+
+    private async Task Delete(Template template)
+    {
+        await _httpWrapper.PostAsJsonAsync("api/templates/delete", template);
+        await _changedEvent.Notify(SomethingChangedEventType.TemplateDeleted, template.Name);
+
+        StateHasChanged();
+    }
+
+    Task NavigateToEdit(string name)
+    {
+        var url = _urlCreator.CreateRelative(name);
+
+        _navigationManager.NavigateTo($"{Urls.TemplatePage}/{url}");
+
+        return Task.CompletedTask;
+    }
+
+    Task NavigateToOcr(string name)
+    {
+        var url = _urlCreator.CreateRelative(name);
+
+        _navigationManager.NavigateTo($"{Urls.OcrPage}/{url}");
+
+        return Task.CompletedTask;
+    }
+}

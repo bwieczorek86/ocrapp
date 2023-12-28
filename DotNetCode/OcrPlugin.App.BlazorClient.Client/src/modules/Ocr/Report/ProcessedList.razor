@@ -1,0 +1,56 @@
+@using OcrPlugin.App.BlazorClient.Client.modules.Ocr
+<Styled @bind-Classname="@_textElement">
+    display: inline-block;
+    align-self: center;
+    margin-left: 0.5em;
+    font-weight: bold;
+</Styled>
+
+<Styled @bind-Classname="@_loadingSmallClass">
+    width: 20px;
+</Styled>
+
+<div style="display: flex;flex-direction: column-reverse;">
+    @foreach (var file in FilesProcessed.Reverse())
+    {
+        <div style="padding: 5px 32px;
+                    overflow-x: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    display: flex;
+                    align-items: center;">
+
+            @if (file.IsStillProcessing())
+            {
+                <div style="display: flex;">
+                    <LoadingSmall Class="@_loadingSmallClass"/>
+                </div>
+            }
+            else
+            {
+                <span style="color: green; font-weight: bold;">✔</span>
+            }
+            <div style=" overflow-x: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                <buttom style="margin-left: 5px;" @onclick="DoNothing">
+                    @file.BrowserFile.Name
+                </buttom>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string _textElement, _loadingSmallClass;
+
+    [Parameter]
+    public Func<string, string, Task> OpenCorrectFileView { get; set; }
+
+    [Parameter]
+    public ISet<ProcessedFile> FilesProcessed { get; set; } = new HashSet<ProcessedFile>();
+
+    public void DoNothing()
+    {
+    // @(_ => @OpenCorrectFileView(file.ReportId, file.FileId))
+    }
+
+}

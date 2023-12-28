@@ -1,0 +1,72 @@
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.components.siteMenu.components
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject ILocalSessionService _localSessionService
+@inject NavigationManager _navigation
+
+<Styled @bind-Classname="@_className">
+    background-image: linear-gradient(#415AC0 -20%, #02C2CC 100%);
+    min-height: 100vh;
+    width: 21vw;
+</Styled>
+
+<Styled>
+    .sidebar-collapse {
+        min-width: 0;
+        width: 114px;
+    }
+</Styled>
+
+<div class="@(!Collapsed ? _className : $"{_className} "+ NavMenuCssClass)" data-component="sitebar">
+    <div class="sidebar">
+        <Logo Collapsed="@Collapsed"/>
+        <MenuElement IsCollapsed="@Collapsed" Text="Lista szablonów" IconName="menu-template-list" IconHeight="28" Route="@Routes.TemplatesList">
+            @* <SubMenuElement Text="Edytuj" IconName="menu-template-list--edit" /> *@
+            @* <SubMenuElement Text="Deaktywuj" IconName="menu-template-list--activate" /> *@
+            @* <SubMenuElement Text="Usuń" IconName="menu-template-list--remove" /> *@
+        </MenuElement>
+        <MenuElement IsCollapsed="@Collapsed" Text="Nowy szablon" IconName="menu-template-add" IconMask=@false Route="@Routes.TemplateCreate" />
+        <MenuElement IsCollapsed="@Collapsed" Text="OCR" IconName="menu-ocr" Route="@Routes.OcrAll" />
+        <MenuElement IsCollapsed="@Collapsed" Text="Raporty" IconName="menu-reports" Route="@Routes.Reports"/>
+        @* <div style="text-align: center;" ><form><button onclick=@Logout>Wyloguj</button></form></div> *@
+    </div>
+</div>
+
+@code {
+    private string _className;
+
+    [Parameter]
+    public bool Collapsed { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _somethingChangedEvent.Changed += (eventType, value) => eventType == SomethingChangedEventType.Route ? OnChanged(value) : Task.CompletedTask;
+    }
+
+    private async Task OnChanged(string value)
+    {
+        Collapsed = Layout.SiteMenuCollapsed;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string NavMenuCssClass => Collapsed ? "sidebar-collapse" : string.Empty;
+
+    private void ToggleNavMenu()
+    {
+        Collapsed = Collapsed;
+    }
+
+    private async void Logout()
+    {
+        await _localSessionService.DeleteJwtToken();
+        await _localSessionService.DeleteCompanyNameCookie();
+        await _localSessionService.DeleteTokenCookie();
+
+        _navigation.NavigateTo($"/login");
+    }
+}

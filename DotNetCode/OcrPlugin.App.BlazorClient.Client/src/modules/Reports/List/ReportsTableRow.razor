@@ -1,0 +1,67 @@
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+
+@inject BetterNavigationManager _navigation
+
+<Styled @bind-Classname="@_containerReportsTableRow">
+    display: flex;
+    border-bottom: 1px solid #d6d5d5;
+    cursor: pointer;
+
+    --s: 0.1em;   /* the thickness of the line */
+    --c: rgb(0, 188, 195);
+    color: #0000;
+    padding-bottom: var(--s);
+    background: linear-gradient(90deg,var(--c) 50%,#000 0) calc(100% - var(--_p,0%))/200% 100%, linear-gradient(var(--c) 0 0) 0% 100%/var(--_p,0%) var(--s) no-repeat;
+    -webkit-background-clip: text,padding-box;
+    background-clip: text,padding-box;
+    transition: 0.2s;
+</Styled>
+
+<Styled Classname="@_containerReportsTableRow" PseudoClass="PseudoClasses.Hover">
+  --_p: 100%
+</Styled>
+
+<Styled @bind-Classname="@_column">
+    margin-top: 10px;
+    width: 23%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+</Styled>
+
+<Styled @bind-Classname="@_text">
+    font-size: 24px;
+</Styled>
+
+<div class="@_containerReportsTableRow" @onclick="OpenReport" @onmouseup="OpenReport">
+    <div class="@_column" style="width: 0%">
+        <span class="@_text">@ReportListDto.Id</span>
+    </div>
+    <div class="@_column" style="width: 5%">
+        <span class="@_text">@ReportListDto.Iterator</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">@ReportListDto.DateTime.ToString("yyyy-MM-dd hh:mm")</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">@ReportListDto.UserName</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">@ReportListDto.NumberOfFiles</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">@(ReportListDto.TemplateName ?? "Wiele szablonów")</span>
+    </div>
+</div>
+
+@code {
+    private string _containerReportsTableRow, _column, _text;
+
+    [Parameter]
+    public ReportListDto ReportListDto { get; set; }
+
+    private async Task OpenReport(MouseEventArgs e)
+    {
+        await _navigation.NavigateTo($"/reports/{ReportListDto.Id}", newTab: e.IsMiddleClickClicked());
+    }
+}

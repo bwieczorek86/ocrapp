@@ -1,0 +1,40 @@
+<Project>
+
+    <!-- Define global settings for all projects -->
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10.0</LangVersion>
+        <AnalysisLevel>none</AnalysisLevel>
+        <CodeAnalysisRuleSet>..\Stylecop.Analyzers.ruleset</CodeAnalysisRuleSet>
+        <StyleCopTreatErrorsAsWarnings>false</StyleCopTreatErrorsAsWarnings>
+        <_SkipUpgradeNetAnalyzersNuGetWarning>true</_SkipUpgradeNetAnalyzersNuGetWarning>
+   </PropertyGroup>
+
+   <!-- Define custom properties for conditions in groups below -->
+    <PropertyGroup>
+        <IsTestProject>false</IsTestProject>
+        <IsTestProject Condition="$(MSBuildProjectName.Contains('.Tests'))">true</IsTestProject>
+        <IsDbProject>false</IsDbProject>
+        <IsDbProject Condition="$(MSBuildProjectName.Contains('.Db'))">true</IsDbProject>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+        <PackageReference Include="coverlet.msbuild" Version="2.7.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(IsDbProject)' == 'false'">
+         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.321">
+             <PrivateAssets>all</PrivateAssets>
+             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+         </PackageReference>
+         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+             <PrivateAssets>all</PrivateAssets>
+             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+         </PackageReference>
+         <AdditionalFiles  Include="..\stylecop.json" />
+     </ItemGroup>
+
+ </Project>

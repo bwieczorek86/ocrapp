@@ -1,0 +1,12 @@
+@attribute [Route(Routes.Home)]
+
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override Task OnInitializedAsync()
+    {
+        NavigationManager.NavigateTo("/templates/list");
+        
+        return Task.CompletedTask;
+    }
+} 

@@ -1,0 +1,201 @@
+@attribute [RouteAttribute(Routes.Login)]
+@using OcrPlugin.App.BlazorClient.Client.src.modules.Login.Components
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.notAuthorized
+@using Microsoft.AspNetCore.Components
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using Blazored.FluentValidation
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.Common
+
+@layout MainLayoutNotAuthorized
+
+@inject NavigationManager _navigationManager
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject IHttpWrapper _httpWrapper
+@inject HttpClient Http
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_containerClassName">
+    display: grid;
+    grid-template-columns: 0.10fr 1.05fr 0.85fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+    grid-template-areas:". . .";
+    height: 98vh;
+    overflow: hidden;
+</Styled>
+
+<Styled @bind-Classname="@_rows">
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1.06fr 1.1fr 1fr 0.7fr 1.5fr 0.5fr;
+    gap: 0px 0px;
+    grid-template-areas:
+    "."
+    "."
+    "."
+    "."
+    "."
+    ".";
+    margin: 0px 50px;
+</Styled>
+
+<Styled> @* placeholder coloring  *@
+    ::-webkit-input-placeholder { /* WebKit, Blink, Edge */
+        color:    #004AAD;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+       color:    #004AAD;
+       opacity:  1;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+       color:    #004AAD;
+       opacity:  1;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10-11 */
+       color:    #004AAD;
+    }
+    ::-ms-input-placeholder { /* Microsoft Edge */
+       color:    #004AAD;
+    }
+
+    ::placeholder { /* Most modern browsers support this now. */
+       color:    #004AAD;
+    }
+</Styled>
+
+<Styled> @* autofill coloring  *@
+
+    input:autofil {
+        font-size: 50px;
+    }
+
+    input:-webkit-autofill::first-line {
+        font-size: 50px;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 100px white inset !important;
+        -webkit-text-fill-color: #004AAD
+    }
+
+    @@-webkit-keyframes autofill {
+      100% {
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
+      }
+    }
+</Styled>
+
+<div class="@_containerClassName">
+    <div></div>
+    <EditForm class="@_rows" method="post" Model="_loginRequest" OnValidSubmit="@HandleValidSubmit">
+        <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true" />
+        <div></div>
+        <div style="display: flex;">
+            <Icon IconName="l-1" Height="105" Width="105" BgColor="#FFFFFF"/>
+            <LoginText />
+        </div>
+        <div style="margin: auto 0;">
+            <div style="display: flex">
+                <Icon IconName="l-2" Height="105" Width="105" BgColor="#FFFFFF"/>
+                <InputText style="font-size: 50px; color: #004AAD !important; align-self: center; margin-left: 70px; width: 28.5vw; padding: 10px 35px;"
+                           id="form_login"
+                           name="UserName"
+                           placeholder="E-mail"
+                           @bind-Value=_loginRequest.UserName />
+            </div>
+            <ValidationMessage For="@(() => _loginRequest.UserName)"/>
+        </div>
+        <div style="margin: auto 0;">
+            <div style="display: flex">
+                <IconNoBg IconName="l-3" Height="105" Width="105"/>
+                <InputText style="font-size: 50px; color: #004AAD !important; align-self: center; margin-left: 70px; width: 28.5vw; padding: 10px 35px;"
+                           id="form_password"
+                           type="password"
+                           name="Password"
+                           placeholder="Hasło"
+                           @bind-Value=_loginRequest.Password />
+            </div>
+            <ValidationMessage For="@(() => _loginRequest.Password)"/>
+        </div>
+        <div style="text-align: center; margin: auto;">
+            <div style="
+                font-size: 50px;
+                margin-bottom: 4vh;
+                font-weight: 600;
+                color: red;
+                -webkit-text-stroke: 0.1px black;
+                display: @(_validationErrorShow ? "" : "none");
+            ">Niepoprawny login lub hasło.</div>
+            <LoginButton Title="LOGIN"/>
+        </div>
+    </EditForm>
+    <Person />
+</div>
+
+@code {
+    private string _rows, _containerClassName;
+
+    private FluentValidationValidator _fluentValidationValidator;
+    private bool _validationErrorShow = false;
+    LoginRequest _loginRequest = new();
+    string message = string.Empty;
+    string userData = string.Empty;
+    private string ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+        _navigationManager.TryGetQueryString<string>("returnUrl", out var returnUrl);
+        ReturnUrl = returnUrl;
+
+        userData = await _localSessionService.GetJwtToken();
+        if (userData != null)
+        {
+            _navigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await _httpWrapper.PostAsyncWithResponseWithoutToken($"/api/auth/login?returnUrl={ReturnUrl}", _loginRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+                if (result != null)
+                {
+                    message = result.Message;
+                    if (result.Success)
+                    {
+                        await _localSessionService.CreateJwtToken(result.Email, result.JwtBearer);
+                        await _tokenService.AddTokenToLocalSession();
+                        StateHasChanged();
+
+                        if (result.ValidateUrl != null)
+                            _navigationManager.NavigateTo($"/{result.ValidateUrl}", true);
+                        _navigationManager.NavigateTo("/templates/list", true);
+                    }
+                }
+            }
+            else
+            {
+                _validationErrorShow = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            string msg = e.ToString();
+            throw;
+        }
+    }
+}

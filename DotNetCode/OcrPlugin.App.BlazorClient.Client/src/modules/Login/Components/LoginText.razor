@@ -1,0 +1,22 @@
+@using OcrPlugin.App.BlazorClient.Client.Utils
+
+<Styled @bind-Classname="@_className">
+    font-weight: 1000;
+    color: white;
+    align-self: center;
+    font-size: 80px;
+    margin-left: 70px;
+    letter-spacing: 10px;
+
+    @@media (min-width: @Medias.HiResDesktops) {
+        font-size: 110px;
+    }
+</Styled>
+
+<div class="@_className">
+    @L["H1_LoginPage"]
+</div>
+
+@code {
+    private string _className;
+}

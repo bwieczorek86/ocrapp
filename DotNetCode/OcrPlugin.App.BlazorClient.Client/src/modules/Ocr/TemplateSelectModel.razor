@@ -1,0 +1,53 @@
+@using OcrPlugin.App.BlazorClient.Client.Common
+
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_list">
+    text-align: center;
+    width: auto;
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 20px;
+    background: rgb(83, 85, 175);
+    color: white;
+    border-radius: 15px;
+</Styled>
+
+<Styled Classname="@_list" PseudoClass="PseudoClasses.Hover">
+    background: rgb(0, 188, 195);
+    opacity: 0.7;
+    transform:translateY(-1px);
+    box-shadow:0 7px 14px rgba(50,50,93,.1), 0 3px 6px rgba(0,0,0,.08);
+</Styled>
+
+<div style="display: grid;">
+    <button onclick="@(() => ChooseTemplateName(null))" class="@_list">Bez szablonu</button>
+
+    @foreach (var templateName in _templateNames)
+    {
+        <button onclick="@(() => ChooseTemplateName(templateName))" class="@_list">@templateName</button>
+    }
+</div>
+
+@code {
+    private string _list;
+    private IReadOnlyCollection<string> _templateNames = new List<string>();
+
+    [Parameter]
+    public string Description { get; set; }
+
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _templateNames = await _httpWrapper.GetFromJsonAsync<IReadOnlyCollection<string>>("/api/templates/GetAllNames");
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ChooseTemplateName(string value)
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(value));
+    }
+}

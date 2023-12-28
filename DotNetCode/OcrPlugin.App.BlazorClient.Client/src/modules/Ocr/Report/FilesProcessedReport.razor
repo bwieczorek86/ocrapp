@@ -1,0 +1,72 @@
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.modules.Ocr
+
+<Styled @bind-Classname="@_hideElementClass">
+    display: none;
+</Styled>
+
+<Styled @bind-Classname="@_collapsedClass">
+    max-width: 150px !important;
+</Styled>
+
+<Styled @bind-Classname="@_container"
+        ComposeCollapsed="@_collapsedClass" ComposeCollapsedIf="@_collapseElement"
+        ComposeHideElement="@_hideElementClass" ComposeHideElementIf="@(!IsOcrInited)">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: absolute;
+    visibility: visible;
+    right: 0px;
+    margin: 17px 17px 25px 0px;
+    height: -webkit-fill-available;
+    overflow-y: auto;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+</Styled>
+
+<div class="@InheritedClass @_container">
+    <div style="height: 160px; display: flex; margin-left: 1em; margin-top: 1em;">
+        <div style="margin: 2.5% 2.5%">
+            <IconNoMask IconName="ocr-processed" Height="135" Width="135" Margin="auto"/>
+        </div>
+        <div style="width: 40%; margin: auto 60px auto 20px;" class="@_chooseElementClass">
+            @(FilesProcessed.Any(f => f.IsStillProcessing()) ? "Przetwarzane pliki" : "Przetworzone pliki")
+        </div>
+    </div>
+    <hr style="margin-left: 2em; height: 5px; background: rgb(83, 85, 175); margin-right: 2em;">
+
+    <ProcessedList FilesProcessed="@FilesProcessed"
+                   OpenCorrectFileView="@OpenCorrectFileView"
+    />
+
+</div>
+
+@code {
+    private string _container, _chooseElementClass, _collapsedClass, _hideElementClass;
+    private bool _collapseElement = false;
+
+    [Parameter]
+    public bool IsOcrInited { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public ISet<ProcessedFile> FilesProcessed { get; set; }
+
+    [Parameter]
+    public Func<string, string, Task> OpenCorrectFileView { get; set; }
+
+    public void ToggleCollapse()
+    {
+        _collapseElement = !_collapseElement;
+    }
+}

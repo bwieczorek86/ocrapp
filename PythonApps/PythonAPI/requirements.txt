@@ -1,0 +1,13 @@
+pip~=21.1.1
+fastapi~=0.65.1
+starlette~=0.14.2
+pydantic~=1.8.2
+setuptools==56.2.0
+h11~=0.12.0
+click==8.0.0
+uvicorn~=0.13.4
+colorama~=0.4.4
+pdf2image~=1.15.1
+Pillow~=8.2.0
+spylls~=0.1.5
+pip install python-multipart

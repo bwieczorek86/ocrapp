@@ -1,0 +1,79 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using System.Runtime.InteropServices
+@using Newtonsoft.Json
+@using DebtorCase = OcrPlugin.App.BlazorClient.Shared.Reports.DebtorCase
+
+@inject IJSRuntime JsRuntime
+
+<Styled @bind-Classname="@_debtor">
+    display: inline-block;
+    padding: 5px 0px;
+    margin: 0px 15px;
+    color: #5355AF
+    font-weight: bold;
+    font-size: 20px;
+</Styled>
+
+<Styled @bind-Classname="@_selectDebtors">
+    border: none;
+    font-size: 25px;
+    color: rgb(83, 85, 175);
+    width: 100%;
+    margin-left: -4px;
+</Styled>
+
+<div style="display: grid">
+    <br/>
+    @if (Cases.Count() == 1 && Cases.Count(c => string.IsNullOrWhiteSpace(c.ContractId)) <= 1)
+    {
+        <div class="@_debtor"
+             style="font-weight: bold;
+                color: rgb(83, 85, 175);
+                font-size: 30px;">
+            Znaleziono jedną sprawę:
+        </div>
+        <div class="@_selectDebtors" style="margin-left: 15px;">
+            @Cases.First().ContractId
+        </div>
+    }
+    @if (Cases.Count() == 1 && Cases.Count(c => string.IsNullOrWhiteSpace(c.ContractId)) == 1)
+    {
+        <div class="@_debtor"
+             style="font-weight: bold;
+                color: rgb(83, 85, 175);
+                font-size: 30px;">
+            Nie znaleziono sprawy.
+        </div>
+    }
+    else if (Cases.Count() > 1)
+    {
+        <div class="@_debtor"
+             style="font-weight: bold;
+                color: rgb(83, 85, 175);
+                font-size: 25px;">
+            Znaleziono wiele spraw:
+            <select @onchange="@(ChangeCase)" class="@_selectDebtors">
+                @foreach (var debtorCase in Cases)
+                {
+                    <option value="@debtorCase.ContractId">@debtorCase.ContractId</option>
+                }
+            </select>
+        </div>
+    }
+</div>
+
+@code {
+    private string _debtor, _selectDebtors;
+
+    [Parameter]
+    public IEnumerable<DebtorCase> Cases {get;set;}
+
+    [Parameter]
+    public Action<ChangeEventArgs> ChangeDebtor { get; set; }
+
+    [Parameter]
+    public Action<ChangeEventArgs> ChangeCase { get; set; }
+}

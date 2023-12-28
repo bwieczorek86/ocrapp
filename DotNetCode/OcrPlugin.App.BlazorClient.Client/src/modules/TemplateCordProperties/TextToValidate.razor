@@ -1,0 +1,52 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+
+<Styled @bind-Classname="@_textToValidate">
+    margin: 10px;
+    font-weight: bold;
+    font-size: 24px;
+    padding: 5px;
+    border-bottom: 1px solid;
+    position: relative;
+    color: @GetColor();
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+</Styled>
+
+<Styled Classname="@_textToValidate" PseudoClass="PseudoClasses.LastOfType">
+    border-bottom-width: 0px;
+</Styled>
+
+<Styled Classname="@_textToValidate" PseudoClass="PseudoClasses.LastChild">
+    border-bottom-width: 0px;
+</Styled>
+
+<div class="@_textToValidate">
+    <div style="display: inline-block;">@(IsPlaceholder ? $"{L[PropertyName]}..." : $"{L[PropertyName]}: {TextToDisplay}")</div>
+    <div style="position: absolute;
+                right: 5px;
+                bottom: 10px;">
+        <IconNoMask IconName="template-cords-view--property-check" Height="32" Width="27" Margin="unset"/>
+    </div>
+</div>
+
+@code {
+    private string _textToValidate;
+
+    [Parameter]
+    public string PropertyName { get; set; }
+
+    [Parameter]
+    public string TextToDisplay { get; set; }
+
+    [Parameter]
+    public bool IsPlaceholder { get; set; } = true;
+
+    private string GetColor()
+        => IsPlaceholder
+            ? "lightgray"
+            : "#5355AF";
+}

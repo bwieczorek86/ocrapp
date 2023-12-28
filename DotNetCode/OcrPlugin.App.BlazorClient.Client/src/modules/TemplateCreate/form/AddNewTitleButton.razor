@@ -1,0 +1,36 @@
+<Styled @bind-Classname="@_saveButtonName">
+    background: #5355AF;
+    margin: 10px;
+    text-align: center;
+    color: white;
+    font-size: 15px;
+    padding: 6px 15px 8px 15px;
+    border-radius: 15px;
+    display: block;
+    box-sizing: content-box;
+    border-width: 0px;
+    cursor: pointer;
+</Styled>
+
+<Styled ClassName="@_saveButtonName" PseudoClass="PseudoClasses.Hover">
+    background: rgb(0, 188, 195);
+    opacity: 0.7;
+    transform:translateY(-1px);
+    box-shadow:0 7px 14px rgba(50,50,93,.1), 0 3px 6px rgba(0,0,0,.08);
+</Styled>
+<button class="@_saveButtonName @(ClassName ?? "")" @onclick="HandleValidSubmit" @onclick:preventDefault="true" >
+    @L[@Name]
+</button>
+
+@code {
+    private string _saveButtonName;
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public string ClassName { get; set; }
+
+    [Parameter]
+    public Func<Task> HandleValidSubmit { get; set; }
+}

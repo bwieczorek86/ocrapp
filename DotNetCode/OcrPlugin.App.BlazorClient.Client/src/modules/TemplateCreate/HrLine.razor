@@ -1,0 +1,14 @@
+<Styled @bind-Classname="@_hrLine">
+    width: @Width;
+    height: 5px;
+    background: rgb(83, 85, 175);
+</Styled>
+
+<hr class="@_hrLine">
+
+@code {
+    private string _hrLine;
+
+    [Parameter]
+    public string Width { get; set; }
+}

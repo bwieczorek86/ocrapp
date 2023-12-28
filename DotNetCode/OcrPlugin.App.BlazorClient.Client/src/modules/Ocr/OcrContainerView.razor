@@ -1,0 +1,63 @@
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@inject OcrApi _ocrApi
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_hideElementClass">
+    display: none !important;
+</Styled>
+
+<Styled @bind-Classname="@_element" ComposeHideElement="@_hideElementClass" ComposeHideElementIf="@IsOcrInited">
+    background: white;
+    border-radius: 10px;
+    margin: 24px;
+</Styled>
+
+<FilesDropperContainer @ref="@_documentPreview"
+                       InheritedClass="@_element"
+                       TemplateName="@TemplateName"
+                       LoadFiles="@LoadFiles"
+                       InitOcr="@InitOcr"
+                       IsThereAnyFileLoaded="@FilesToLoad.Any()"
+                       ChangeTemplate="@ChangeTemplate"/>
+
+<FilesLoaded InheritedClass="@_element"
+             RemoveFile="@Remove"
+             FilesToLoad="@FilesToLoad"/>
+
+@code {
+    private string _element, _hideElementClass;
+    private FilesDropperContainer _documentPreview;
+
+    [Parameter]
+    public bool IsOcrInited { get; set; }
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [Parameter]
+    public Func<IEnumerable<IBrowserFile>, Task> LoadFiles { get; set; }
+
+    [Parameter]
+    public ISet<IBrowserFile> FilesToLoad { get; set; }
+
+    [Parameter]
+    public Func<Task> InitOcr { get; set; }
+
+    [Parameter]
+    public Func<Task> ChangeTemplate { get; set; }
+
+    private async Task Remove(IBrowserFile browserFile)
+    {
+        var fileToLoad = FilesToLoad.FirstOrDefault(fileToLoad => fileToLoad == browserFile);
+        if (fileToLoad != null)
+        {
+            FilesToLoad.Remove(fileToLoad);
+        }
+
+        _documentPreview.RefreshState(FilesToLoad.Any());
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+}

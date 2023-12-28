@@ -1,0 +1,84 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components
+@using OcrPlugin.App.BlazorClient.Client.Utils
+@using Blazored.Modal.Services
+@using Blazored.Modal
+<Styled @bind-Classname="@_menuItem">
+    background: white;
+    border: none;
+    padding: 10px 0px;
+    border-bottom: 1px solid black;
+    font-size: 16px;
+</Styled>
+
+<Styled Classname="@_menuItem" PseudoClass="PseudoClasses.LastChild">
+    border-bottom: none;
+</Styled>
+
+<Styled Classname="@_menuItem" PseudoClass="PseudoClasses.Hover">
+    background-color: #B0BEC5;
+</Styled>
+
+@if (ConfirmationMessage is not null)
+{
+    <button class="@_menuItem" @onclick="@OnClickConfirm" disabled="@Disabled" @onmouseleave:stopPropagation="true">
+        @Title
+    </button>
+}
+else
+{
+    <button class="@_menuItem" @onclick="@OnClick" disabled="@Disabled" @onmouseleave:stopPropagation="true">
+        @Title
+    </button>
+}
+
+
+@code {
+    private string _menuItem;
+
+    [CascadingParameter] public IModalService Modal { get; set; }
+
+    [Parameter]
+    public string ConfirmationMessage { get; set; }
+
+    [Parameter]
+    public ColorScheme Scheme { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public Func<Task> OnClick { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public Action<MouseEventArgs> OnMouseOver { get; set; }
+
+    [Parameter]
+    public Action OnMouseOut { get; set; }
+
+    private async Task OnClickConfirm()
+    {
+        var confirmationModal = Modal.Show<ConfirmationModal>(
+            title: "Czy na pewno chcesz usunąć szablon?",
+            options: new ModalOptions
+            {
+                Animation = ModalAnimation.FadeIn(0.3),
+                DisableBackgroundCancel = true,
+                HideCloseButton = true
+            });
+        var result = await confirmationModal.Result;
+
+        if (result.Cancelled)
+        {
+            return;
+        }
+        else
+        {
+            await OnClick();
+        }
+
+        StateHasChanged();
+    }
+}

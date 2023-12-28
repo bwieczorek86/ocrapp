@@ -1,0 +1,48 @@
+<Styled @bind-Classname="@_documentPreview">
+    min-width: 1090px;
+    max-width: 1090px;
+    flex-grow: 1;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    display: flex;
+    min-height: 100px;
+</Styled>
+
+<Styled Classname="@_documentPreview" PseudoClass="PseudoClasses.Hover">
+    opacity: 80%;
+</Styled>
+
+<Styled @bind-Classname="@_text">
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+    margin: auto 20px auto 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+</Styled>
+
+<Styled @bind-Classname="@_center">
+    justify-content: center;
+</Styled>
+<div class="@_documentPreview @(TemplateName == "default" ? _center : string.Empty)" @onclick="ChangeTemplate">
+    @{ var text = IsDefaultTemplate
+           ? "Nie wybrano szablonu."
+           : $"Szablon: {TemplateName}"; }
+    <div class="@_text">@text</div>
+</div>
+
+@code {
+    private string _documentPreview, _text, _center;
+
+    private bool IsDefaultTemplate => TemplateName == "default";
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [Parameter]
+    public Func<Task> ChangeTemplate { get; set; }
+}

@@ -1,0 +1,18 @@
+@using OcrPlugin.App.BlazorClient.Client.Common
+@inject NavigationManager _navigation
+@inject IUrlCreator _urlCreator
+
+@code {
+    protected override void OnInitialized()
+    {
+        var thisPage = _navigation.Uri.Replace(_navigation.BaseUri, "");
+        var urlEncoded = _urlCreator.CreateRelative(thisPage);
+
+        if (string.IsNullOrWhiteSpace(urlEncoded))
+        {
+            _navigation.NavigateTo($"/login");
+        }
+
+        _navigation.NavigateTo($"/login?returnUrl={urlEncoded}");
+    }
+}

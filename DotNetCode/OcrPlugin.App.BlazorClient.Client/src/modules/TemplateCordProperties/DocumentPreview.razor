@@ -1,0 +1,147 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using System.Drawing
+@using Blazored.LocalStorage
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject BlobUriBuilder _blobUriBuilder
+
+<Styled @bind-Classname="@_documentPreview">
+    margin-left: 40px;
+    min-width: 780px;
+    max-width: 780px;
+    flex-grow: 1;
+</Styled>
+
+<div class="@InheritedClass @_documentPreview">
+    <img alt="Podgląd szablonu"
+         width="@CustomImageScaleWidth"
+         height="@CustomImageScaleHeight"
+         src="@_blobUri"
+         style="margin-left: 10px; margin-top: 3px; position: absolute;"/>
+
+    <svg width="@CustomImageScaleWidth" height="@CustomImageScaleHeight"
+         style="margin-left: 10px; margin-top: 3px; position: absolute;  z-index: 2"
+         @onpointerdown="@PointerDown" @onpointerdown:preventDefault
+         @onpointerup="@PointerUp" @onpointerup:preventDefault
+         @onpointermove="@PointerMove" @onpointermove:preventDefault>
+        @if (_myRect.Display && !string.IsNullOrWhiteSpace(SelectedProperty))
+        {
+            <rect x="@_myRect.RectangleX" y="@_myRect.RectangleY" width="@_myRect.RectangleWidth" height="@_myRect.RectangleHeight" style="fill:transparent;stroke-width:5;stroke:rgb(0, 188, 195)" />
+        }
+        @foreach (var item in Template.Properties)
+        {
+            if (item.IsNotEmpty())
+            {
+                <g>
+                    <rect x="@((int) (item.CordsStartX / ScaleForX))"
+                          y="@((int) (item.CordsStartY / ScaleForY))"
+                          width="@((int) (item.Width / ScaleForX))"
+                          height="@((int) (item.Height / ScaleForY))"
+                          style="fill:transparent;stroke-width:1;stroke: #5355AF"
+                          id="r-@item.Name" />
+                </g>
+            }
+        }
+    </svg>
+</div>
+
+@code{
+    private string _blobUri;
+
+    // SVG
+    private class DrawRectangle
+    {
+        public bool Display { get; set; }
+        public int RectangleX { get; set; }
+        public int RectangleY { get; set; }
+        public int RectangleWidth { get; set; }
+        public int RectangleHeight { get; set; }
+    }
+
+    DrawRectangle _myRect = new();
+    bool _mouseDown;
+
+    void PointerDown(PointerEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedProperty))
+        {
+            return;
+        }
+
+        _mouseDown = true;
+        _myRect.Display = true;
+        _myRect.RectangleX = (int)e.OffsetX;
+        _myRect.RectangleY = (int)e.OffsetY;
+        _myRect.RectangleWidth = (int)e.Width;
+        _myRect.RectangleHeight = (int)e.Height;
+        StateHasChanged();
+    }
+
+    private async Task PointerUp(PointerEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedProperty))
+        {
+            return;
+        }
+
+        _mouseDown = false;
+        var property = Template.Properties.Single(p => p.Name == SelectedProperty);
+        property.CordsStartX = (int)(_myRect.RectangleX * ScaleForX);
+        property.CordsStartY = (int)(_myRect.RectangleY * ScaleForY);
+        property.CordsEndX = (int)((_myRect.RectangleWidth + _myRect.RectangleX) * ScaleForX);
+        property.CordsEndY = (int)((_myRect.RectangleHeight + _myRect.RectangleY) * ScaleForY);
+
+        SelectedProperty = string.Empty;
+        _myRect = new();
+
+        StateHasChanged();
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.TemplateCordsSet, property.Name);
+    }
+
+    void PointerMove(PointerEventArgs e)
+    {
+        if (_mouseDown)
+        {
+            _myRect.RectangleWidth = (int)e.OffsetX - _myRect.RectangleX;
+            _myRect.RectangleHeight = (int)e.OffsetY - _myRect.RectangleY;
+            StateHasChanged();
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public Template Template { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    private double ScaleForX { get; set; }
+    private double ScaleForY { get; set; }
+    private string SelectedProperty { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _tokenService.CheckIfTokenIsNotExpired();
+        _blobUri = await _blobUriBuilder.GetTemplateBlobUri(Template.FileName, false);
+
+        ScaleForX = Template.TemplateImageSize.Width / (double)CustomImageScaleWidth;
+        ScaleForY = Template.TemplateImageSize.Height / (double)CustomImageScaleHeight;
+    }
+
+    private string _documentPreview;
+
+    private int CustomImageScaleWidth { get; } = 760;
+    private int CustomImageScaleHeight { get; } = 905;
+
+    public void SetSelectedProperty(string selectedProperty, bool shouldSave)
+    {
+        SelectedProperty = selectedProperty;
+        StateHasChanged();
+    }
+}

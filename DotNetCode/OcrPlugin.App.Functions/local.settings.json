@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "OcrLicenseKey": "IRONOCR.BARTEKWIECZOREK.4315-4208B0BCD0-CAFQJDI6JVPTL-XJL3CZUXDERV-4ZMJNVEFAPT7-QHYN7IVGULP2-T3UEYYZXQ47I-7QBI65-TGUEGDZS4HGJEA-DEPLOYMENT.TRIAL-JRLOPA.TRIAL.EXPIRES.12.MAR.2023",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "FUNCTION_APP_EDIT_MODE": "readwrite",
+    "BingSubscriptionKey": "3e3578f74986421b80b43f92f734c58d",
+    "BingBaseUri": "https://api.bing.microsoft.com/v7.0/spellcheck"
+  },
+  "ConnectionStrings": {
+    "AzureStorage": "DefaultEndpointsProtocol=https;AccountName=ocrplugin;AccountKey=jTq3lByYq/lHIthX5kv7PUbNcZFuP2DbQNfxSzCOpjXJOotyalceUdzYgf3I7OUghn05YjL7qZQzMrp9YUwWmA==;EndpointSuffix=core.windows.net"
+  },
+  "AppSettings": {
+    "BingSubscriptionKey": "3e3578f74986421b80b43f92f734c58d",
+    "BingBaseUri": "https://api.bing.microsoft.com/v7.0/spellcheck"
+  }
+}

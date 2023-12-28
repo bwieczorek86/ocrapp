@@ -1,0 +1,23 @@
+<Styled @bind-Classname="@ClassName">
+    width: 96px;
+    height: 96px;
+    background: url(/static/template-list-next.svg) 0px 0px no-repeat;
+    border: 0px none;
+    align-self: center;
+    margin: 0;
+    background-size: 100%;
+    position: absolute;
+    right: 3vh;
+    top: 45vh;
+    cursor: pointer;
+</Styled>
+
+<button class="@ClassName" @onclick="@(() => OnClick())"></button>
+
+@code {
+    [Parameter]
+    public string ClassName { get; set; }
+
+    [Parameter]
+    public Action OnClick { get; set; }
+}

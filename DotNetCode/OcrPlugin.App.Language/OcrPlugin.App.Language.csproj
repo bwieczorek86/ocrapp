@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\App.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>App.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Resources\App.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Lang.resx</DependentUpon>
+        </Compile>
+        <Compile Update="Resources\App.Designer.cs">
+          <AutoGen>True</AutoGen>
+          <DependentUpon>App.resx</DependentUpon>
+          <DesignTime>True</DesignTime>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+    
+</Project>

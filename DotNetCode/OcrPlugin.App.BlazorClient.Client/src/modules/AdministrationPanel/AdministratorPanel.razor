@@ -1,0 +1,49 @@
+@attribute [Route(Routes.AdministratorPanel)]
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.Configuration
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.src.modules.Login
+
+@inject NavigationManager _navigationManager
+@inject IConfiguration _configuration
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_containerClassName">
+    display: grid;
+</Styled>
+
+<AuthorizeView Roles="pusheen">
+    <Authorized>
+        <div class="@_containerClassName">
+            <p>Only for pusheen masters!</p>
+        </div>
+        <p>AzureFunctionsBaseUri: @_configuration["AzureFunctionsBaseUri"]</p>
+        <p>InternalPythonClientUrl: @_configuration["InternalPythonClientUrl"]</p>
+        <p>TemplatesBlobBaseUri: @_configuration["TemplatesBlobBaseUri"]</p>
+    </Authorized>
+    <NotAuthorized>
+        <Login />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string _containerClassName;
+    string userData;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        userData = await _localSessionService.GetJwtToken();
+        if (userData == null)
+        {
+            _navigationManager.NavigateTo("/");
+        }
+        else
+        {
+            _navigationManager.NavigateTo($"/login");
+        }
+    }
+}

@@ -1,0 +1,152 @@
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+
+@inject NavigationManager _navigation
+
+<Styled @bind-Classname="@_hideElementClass">
+    display: none;
+</Styled>
+
+<Styled @bind-Classname="@_container" ComposeHideElement="@_hideElementClass" ComposeHideElementIf="@(_hideElement || !IsOcrInited)">
+    margin-right: 40px;
+    flex-grow: 1;
+    position: relative;
+    max-width: 1180px;
+</Styled>
+
+<Styled @bind-Classname="@_chooseElementClass">
+    margin: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 35px;
+    white-space: nowrap;
+</Styled>
+
+<Styled @bind-Classname="@_reportButton">
+    margin: auto 9.5em;
+    text-align: center;
+    font-size: 30px;
+    white-space: nowrap;
+    display: inline-block;
+    align-self: flex-end;
+    background: rgb(83, 85, 175);
+    color: white;
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 44px;
+    border-width: 0px;
+    width: -webkit-fill-available;
+    box-sizing: content-box;
+    height: 40px;
+</Styled>
+
+<Styled ClassName="@_reportButton" PseudoClass="PseudoClasses.Hover">
+    background: rgb(0, 188, 195);
+</Styled>
+
+<Styled ClassName="@_reportButton" PseudoClass="PseudoClasses.Before">
+    margin:0 0 0 5px;
+    transform:scaleX(-1);
+</Styled>
+
+<Styled @bind-Classname="@_loadingSmallClass">
+    width: 50px;
+</Styled>
+
+<div class="@InheritedClass @_container">
+    <div style="height: 160px; display: flex; margin-top: 1em;">
+        <div style="margin: 1% 2.5% 2.5% 2.5%;">
+            <IconNoMask IconName="template-cords-edit-check" Height="170" Width="170" Margin="auto"/>
+        </div>
+        @if(FilesToLoad.Any())
+        {
+            <div style="height: 160px; display: flex; margin-top: 1em;">
+                <div style="width: 40%; margin: auto 30px auto 20px;" class="@_chooseElementClass">Pliki są wysyłane na serwer</div>
+            </div>
+            <div style="height: 160px; display: flex; margin-top: 1em; text-align: right;">
+                <LoadingSmall Class="@_loadingSmallClass" />
+            </div>
+        }
+        else
+        {
+            <div style="width: 40%; margin: auto 30px auto 20px;" class="@_chooseElementClass">Wysłano wszystkie pliki</div>
+        }
+    </div>
+    <HrLine Width="95%"></HrLine>
+    @if (FilesToLoad.Any())
+    {
+        @foreach (var file in FilesToLoad)
+        {
+            <div>
+                <p style="margin-left: 30px;">- @file.Name</p>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align: -webkit-center;
+                        display: block;
+                        justify-content: space-around;
+                        top: 30%;
+                        position: relative;">
+            <div style="font-size: 25px;
+                        color: #5355AF;
+                        margin-bottom: 20px;">
+                Zakończono ładowanie.
+                <br>
+                Pliki są przetwarzane na serwerze.
+                <br>
+                Możesz bezpiecznie opuścić tę stronę.
+            </div>
+            <button @onclick="OpenReport"
+                    class="@_reportButton">
+                Naciśnij, aby przejść do strony raportu.
+            </button>
+        </div>
+    }
+
+</div>
+
+@code {
+    private string _container, _chooseElementClass, _hideElementClass, _reportButton, _loadingSmallClass;
+    private bool _hideElement = false;
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    [Parameter]
+    public bool IsOcrInited { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<Task> SaveTemplate { get; set; }
+
+    [Parameter]
+    public Func<IBrowserFile, Task> LoadFile { get; set; }
+
+    [Parameter]
+    public ISet<IBrowserFile> FilesToLoad { get; set; }
+
+    public void Remove(IBrowserFile browserFile)
+    {
+        var fileToLoad = FilesToLoad.FirstOrDefault(fileToLoad => fileToLoad == browserFile);
+        if (fileToLoad != null)
+        {
+            FilesToLoad.Remove(fileToLoad);
+        }
+
+        StateHasChanged();
+    }
+
+    public void ToggleHide()
+    {
+        _hideElement = !_hideElement;
+    }
+
+    private void OpenReport()
+    {
+        _navigation.NavigateTo($"/reports/{ReportId}");
+    }
+}

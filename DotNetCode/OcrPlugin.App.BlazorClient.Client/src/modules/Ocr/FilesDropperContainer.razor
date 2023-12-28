@@ -1,0 +1,55 @@
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Common
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject TokenService _tokenService
+@inject BlobUriBuilder _blobUriBuilder
+
+<Styled @bind-Classname="@_documentPreview">
+    background: none;
+    margin-left: 40px;
+    min-width: 1090px;
+    max-width: 1090px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+</Styled>
+
+<div class="@InheritedClass @_documentPreview">
+    <FilesDropperTemplateName TemplateName="@(TemplateName ?? "default" )"
+                              ChangeTemplate="@ChangeTemplate"
+        />
+
+    <FilesDropper LoadFiles="@LoadFiles"
+                  InitOcr="@InitOcr"
+                  IsThereAnyFileLoaded="@IsThereAnyFileLoaded"/>
+</div>
+
+@code {
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [Parameter]
+    public bool IsThereAnyFileLoaded { get; set; }
+
+    [Parameter]
+    public string InheritedClass { get; set; }
+
+    [Parameter]
+    public Func<IEnumerable<IBrowserFile>, Task> LoadFiles { get; set; }
+
+    [Parameter]
+    public Func<Task> InitOcr { get; set; }
+
+    [Parameter]
+    public Func<Task> ChangeTemplate { get; set; }
+
+    private string _documentPreview;
+
+    public void RefreshState(bool isThereAnyFileLoaded)
+    {
+        IsThereAnyFileLoaded = isThereAnyFileLoaded;
+        StateHasChanged();
+    }
+}

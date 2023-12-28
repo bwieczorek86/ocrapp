@@ -1,0 +1,95 @@
+﻿@page "/CorrectFile"
+@page "/CorrectFile/{ReportId}"
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using MainLayout = OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main.MainLayout
+
+@inject ILocalSessionService _localSessionService
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject IHttpWrapper _httpWrapper
+
+<Styled @bind-Classname="@_hideElementClass">
+    cursor: inherit;
+    display: none !important;
+</Styled>
+
+<Styled @bind-Classname="@_class" ComposeHideElement="@_hideElementClass" ComposeHideElementIf="@(_hideElement || !IsOcrInited)">
+    cursor: inherit;
+    display: flex;
+</Styled>
+
+
+@if (_loading)
+{
+    <Loading />
+}
+else
+{
+    <div class="@_class">
+        <CorrectFileView Template="Template" @ref="@_correctFileView"/>
+    </div>
+}
+
+@code{
+    private string _hideElementClass, _class;
+    private bool _loading = true, _hideElement = true;
+    private CorrectFileView _correctFileView;
+
+    [Parameter]
+    public bool IsOcrInited { get; set; }
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    private Template Template { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Layout.SiteMenuCollapsed = true;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        if (TemplateName != null)
+        {
+            Template = await _httpWrapper.GetFromJsonAsync<Template>($"api/Templates/{TemplateName}");
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    public async Task ToggleHide(string reportId, string fileId)
+    {
+        _hideElement = !_hideElement;
+
+        if (TemplateName == null)
+        {
+            var reportCall = await _httpWrapper.GetAsyncWithResponse($"api/reports/{reportId}/{fileId}");
+
+            if (reportCall.IsSuccessStatusCode)
+            {
+                TemplateName = (await reportCall.Content.ReadFromJsonAsync<OcrResultDto>()).TemplateName;
+            }
+        }
+
+        if (TemplateName != null)
+        {
+            Template = await _httpWrapper.GetFromJsonAsync<Template>($"api/Templates/{TemplateName}");
+        }
+
+        if (Template != null)
+        {
+            await _correctFileView.ChangeState(Template);
+        }
+
+        StateHasChanged();
+    }
+
+    private class OcrResultDto
+    {
+        public string TemplateName { get; set; }
+    }
+}

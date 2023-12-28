@@ -1,0 +1,38 @@
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+<Styled @bind-Classname="@_outerBox">
+    border: 8px solid rgb(71, 136, 199);
+    border-radius: 15px;
+    margin: auto 120px auto 65px;
+    display: flex;
+    flex-direction: column;
+</Styled>
+
+<Styled @bind-Classname="@_innerbox">
+    margin: 5px 25px;
+</Styled>
+
+<div class="@_outerBox">
+    <div class="@_innerbox">
+        <FilesHeader></FilesHeader>
+        @foreach (var reportFile in ReportFiles)
+        {
+            <FilesRow SingleReportFile="@reportFile" ReportId="@ReportId"></FilesRow>
+        }
+    </div>
+</div>
+
+@code {
+    private string _outerBox, _innerbox;
+
+    [Parameter]
+    public string ReportId { get; set; }
+
+    [Parameter]
+    public IEnumerable<SingleReportFile> ReportFiles { get; set; }
+
+    public void UpdateState(IEnumerable<SingleReportFile> reportFiles)
+    {
+        ReportFiles = reportFiles;
+        StateHasChanged();
+    }
+}

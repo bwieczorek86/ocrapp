@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>BlazorApp2.Server-8A486114-B0C1-43BC-A584-D5B23C308EB4</UserSecretsId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentValidation" Version="10.2.1" />
+        <PackageReference Include="Freeware.Pdf2Png" Version="1.0.1" />
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.18.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" Version="6.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.WebApiCompatShim" Version="2.1.0" />
+        <PackageReference Include="NLog.Web.AspNetCore" Version="5.*" />
+        <PackageReference Include="NLog" Version="5.*" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.2.3" />
+        <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\OcrPlugin.App.BlazorClient.Client\OcrPlugin.App.BlazorClient.Client.csproj" />
+        <ProjectReference Include="..\OcrPlugin.App.BlazorClient.Shared\OcrPlugin.App.BlazorClient.Shared.csproj" />
+        <ProjectReference Include="..\OcrPlugin.App.Core\OcrPlugin.App.Core.csproj" />
+        <ProjectReference Include="..\OcrPlugin.App.Identity\OcrPlugin.App.Identity.csproj" />
+        <ProjectReference Include="..\OcrPlugin.App.Integrations\OcrPlugin.App.Integrations.csproj" />
+        <ProjectReference Include="..\OcrPlugin.App.Language\OcrPlugin.App.Language.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+{
+  "ExtendedData": {
+    "inputs": [
+      "https://dev.kambit.pl:1002/"
+    ],
+    "collectionTypes": [
+      "System.Array",
+      "System.Collections.Generic.Dictionary`2"
+    ],
+    "internalTypeAccess": true,
+    "namespaceMappings": [
+      "*, ServiceReference1"
+    ],
+    "targetFramework": "net5.0",
+    "typeReuseMode": "Specified"
+  }
+}

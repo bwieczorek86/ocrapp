@@ -1,0 +1,19 @@
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+<Styled @bind-Classname="@_container">
+    border-radius: 35px;
+    margin: 20px 25px;
+    text-decoration: none;
+</Styled>
+
+
+<div class="@_container">
+    <TemplateMiniature Template="@Template" />
+    <TextWithIcon Name="@Template.Name" IconName="template-list-edit"/>
+</div>
+
+@code {
+    private string _container;
+
+    [Parameter]
+    public Template Template { get; set; }
+}

@@ -1,0 +1,41 @@
+<Styled @bind-Classname="@_container">
+    display: flex;
+    margin-top: 10px;
+</Styled>
+
+<Styled @bind-Classname="@_column">
+    margin-bottom: 10px;
+    width: 23%;
+</Styled>
+
+<Styled @bind-Classname="@_text">
+    font-weight: bold;
+    color: #5355AF;
+    font-size: 30px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+</Styled>
+
+<div class="@_container">
+    <div class="@_column" style="width: 5%">
+        <span class="@_text">Lp</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">Data</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">Użytkownik</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">Ilość</span>
+    </div>
+    <div class="@_column">
+        <span class="@_text">Nazwa szablonu</span>
+    </div>
+</div>
+
+@code {
+    private string _container, _column, _text;
+}

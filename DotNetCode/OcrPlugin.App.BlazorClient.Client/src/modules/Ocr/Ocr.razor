@@ -1,0 +1,259 @@
+﻿@page "/ocr"
+@page "/ocr/{TemplateName}"
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.layout.main
+@using OcrPlugin.App.BlazorClient.Client.Utils.RouteHelper
+@using OcrPlugin.App.BlazorClient.Client.modules.Ocr
+
+<!-- DO NOT REMOVE THIS -->
+@* ReSharper disable once RedundantUsingDirective *@
+@using OcrPlugin.App.BlazorClient.Client.src.modules.Ocr.Report
+@using OcrPlugin.App.BlazorClient.Shared.Reports
+@using OcrPlugin.App.Common
+@using QueueFilesDto = OcrPlugin.App.BlazorClient.Client.DTOs.QueueFiles
+@using QueueModelDto = OcrPlugin.App.BlazorClient.Client.DTOs.QueueModel
+<!-- DO NOT REMOVE THIS -->
+
+@inject ILocalSessionService _localSessionService;
+@inject SomethingChangedEvent _somethingChangedEvent
+@inject IHttpWrapper _httpWrapper
+
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<Styled @bind-Classname="@_className">
+    display: flex;
+    background: linear-gradient(133deg, rgb(0, 188, 195) 0%, rgb(107, 63, 228) 100%);
+    margin: auto auto auto 25px;
+    min-height: 100vh;
+</Styled>
+
+@if (_loading)
+{
+    <Loading />
+}
+else
+{
+    <div class="@_className">
+        <Report FilesToLoad="@FilesToLoad"
+                FilesProcessed="@FilesProcessed"
+                TemplateName="@TemplateName"
+                IsOcrInited="@_isOcrInited"
+                ReportId="@_reportId.ToString()"/>
+
+        <OcrContainerView @ref="_ocrContainerView"
+                          LoadFiles="@LoadFiles"
+                          FilesToLoad="@FilesToLoad"
+                          InitOcr="@InitOcr"
+                          IsOcrInited="@_isOcrInited"
+                          TemplateName="@TemplateName"
+                          ChangeTemplate="@ChangeTemplate"/>
+    </div>
+}
+
+@code {
+    private string _className;
+    private bool _isOcrInited;
+    private OcrContainerView _ocrContainerView;
+    private bool _loading = true;
+    private Guid _reportId;
+    private bool isStillProcessing;
+    private Timer Timer { get; set; }
+
+    [Parameter]
+    public string TemplateName { get; set; }
+
+    [CascadingParameter]
+    public MainLayout Layout { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    private ISet<IBrowserFile> FilesToLoad { get; set; } = new HashSet<IBrowserFile>();
+    private ISet<ProcessedFile> FilesProcessed { get; set; } = new HashSet<ProcessedFile>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+
+        Layout.SiteMenuCollapsed = true;
+        await _somethingChangedEvent.Notify(SomethingChangedEventType.Route, null);
+
+        _reportId = Guid.NewGuid();
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task ChangeTemplate()
+    {
+        var confirmationModal = Modal.Show<TemplateSelectModel>(
+            title: string.Empty,
+            options: new ModalOptions
+            {
+                Animation = ModalAnimation.FadeIn(0.3),
+                DisableBackgroundCancel = false,
+                HideCloseButton = true,
+                HideHeader = true,
+            });
+
+        var result = await confirmationModal.Result;
+        if (result.Cancelled)
+        {
+            return;
+        }
+        else
+        {
+            var resultValue = result.Data as string;
+            TemplateName = resultValue;
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task HandleOnClick()
+    {
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        Timer.Dispose();
+    }
+
+    private async Task LoadFiles(IEnumerable<IBrowserFile> browserFiles)
+    {
+        foreach (var browserFile in browserFiles)
+        {
+            if (FilesToLoad.FirstOrDefault(file => file.Name == browserFile.Name) != null)
+            {
+                continue;
+            }
+
+            if (!ValidateFile.IsFileValid(browserFile))
+            {
+                continue;
+            }
+
+            FilesToLoad.Add(browserFile);
+        }
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task InitOcr()
+    {
+        _isOcrInited = true;
+        StateHasChanged();
+
+        var report = await CreateReport();
+
+        IEnumerable<Task[]> chunkedTasks = FilesToLoad.Select(file => Task.Run(() => OcrFile(report, file))).Chunk(5);
+
+        isStillProcessing = true;
+        await KeepCheckingState();
+        foreach (Task[] tasks in chunkedTasks)
+        {
+            await Task.WhenAll(tasks);
+        }
+        isStillProcessing = false;
+    }
+
+    private async Task KeepCheckingState()
+    {
+        Timer = new Timer(async _ =>
+        {
+            var timerCount = FilesProcessed.Count(file => file.IsStillProcessing());
+
+            if (timerCount > 0 || isStillProcessing)
+            {
+                var requestMsg = new HttpRequestMessage(HttpMethod.Get, $"api/Reports/{_reportId}");
+                var report = await _httpWrapper.GetAsync<SingleReportDto>(requestMsg, _ => ValueTask.CompletedTask);
+
+                foreach (var file in FilesProcessed)
+                {
+                    file.Status = report.ReportFiles.FirstOrDefault(c => c.FileNameOnDisc == file.FileId).Status;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                await Timer.DisposeAsync();
+            }
+        }, null, 5000, 5000);
+        await Task.CompletedTask;
+    }
+}
+
+@code{
+
+    private async Task OcrFile(dynamic report, IBrowserFile browserFile)
+    {
+        var blobContainer = $"{await _localSessionService.GetCompanyNameCookie()}-blobs-to-ocr";
+        var blobFile = new QueueFilesDto
+        {
+            BlobFileName = ((IEnumerable<dynamic>)report.FileNames).Single(c => c.FileName == browserFile.Name).FileNameOnDisc,
+            FileExtension = Path.GetExtension(browserFile.Name),
+            IsOriginal = true
+        };
+
+        var blobFileList = new List<QueueFilesDto> { blobFile };
+
+        var queueModel = new QueueModelDto
+        {
+            FileName = browserFile.Name,
+            QueueFiles = blobFileList,
+            ReportId = _reportId.ToString(),
+            BlobContainer = blobContainer,
+            TemplateName = TemplateName
+        };
+
+        await AddBlob(browserFile, queueModel);
+
+        MarkFileAsProcessed(browserFile, queueModel.ReportId, queueModel.QueueFiles.Select(x => x.BlobFileName).FirstOrDefault());
+
+        StateHasChanged();
+    }
+
+    private void MarkFileAsProcessed(IBrowserFile browserFile, string reportId, string fileName)
+    {
+        var fileToRemove = FilesToLoad.First(f => f.Name == browserFile.Name);
+        FilesProcessed.Add(new ProcessedFile
+        {
+            BrowserFile = browserFile,
+            ReportId = reportId,
+            FileId = fileName,
+            Status = Consts.FileProcessingStatus.Inited,
+        });
+
+        FilesToLoad.Remove(fileToRemove);
+    }
+
+    private async Task<dynamic> CreateReport()
+    {
+        var dto = new
+        {
+            ReportId = _reportId.ToString(),
+            TemplateName = TemplateName,
+            FileNames = FilesToLoad.Select(c => new
+            {
+                FileName = c.Name,
+                FileNameOnDisc = Guid.NewGuid().ToString(),
+            }).ToList(),
+        };
+
+        await _httpWrapper.PostAsJsonAsync($"api/Reports", dto);
+
+        return dto;
+    }
+
+    private async Task AddBlob(IBrowserFile browserFile, QueueModelDto queueModel)
+    {
+        var multiContent = new MultipartFormDataContent();
+        multiContent.Add(new StreamContent(browserFile.OpenReadStream()), "file", browserFile.Name);
+        multiContent.Add(JsonContent.Create(queueModel), "FileData");
+
+        await _httpWrapper.PostAsyncWithContentAndResponse("api/ocr/upload-file", multiContent);
+    }
+}

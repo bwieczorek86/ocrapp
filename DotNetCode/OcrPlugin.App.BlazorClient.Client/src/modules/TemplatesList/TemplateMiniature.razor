@@ -1,0 +1,79 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components
+@using OcrPlugin.App.BlazorClient.Client.Utils
+@using BlazorStyled
+@using OcrPlugin.App.BlazorClient.Client.Common.TokenService
+@using Blazored.LocalStorage
+@using OcrPlugin.App.BlazorClient.Client.Common
+@using OcrPlugin.App.BlazorClient.Client.DTOs
+
+@inject ILocalStorageService _localStorage
+@inject IStyled Styled
+@inject TokenService _tokenService
+@inject BlobUriBuilder _blobUriBuilder
+@inject ILocalSessionService _localSessionService
+
+<Styled @bind-Classname="@_miniature">
+    border: 12px solid rgb(71, 136, 199);
+    border-radius: 35px;
+    width: 28vh;
+    height: 52vh;
+    margin: unset 6.5px 20px 6.5px;
+    position: relative;
+</Styled>
+
+<Styled @bind-Classname="@_inActive">
+    border: 12px solid #B0BEC5;
+</Styled>
+
+
+<div class="@_miniature @(Template.IsActive ? string.Empty : _inActive)"
+     href="@Routes.TemplateOcr(Template.Name)"
+     @onmouseenter="OnMouseOver"
+     @onmouseleave="OnMouseLeave">
+    <img src="@_blobUri" style="border-radius: 35px; width: 28vh; height: 52vh"/>
+    @if (showHamburger)
+    {
+        <TemplateMiniatureHamburger Template="@Template" ToggleIsActive="@ToggleIsActive"/>
+    }
+</div>
+
+@code {
+    private string _miniature, _inActive;
+    private string _blobUri = string.Empty;
+    private bool showHamburger;
+
+    [Parameter]
+    public Template Template { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _tokenService.CheckIfTokenIsNotExpired();
+        if (Template.FileName != null && string.IsNullOrWhiteSpace(_blobUri))
+        {
+            _blobUri = await _blobUriBuilder.GetTemplateBlobUri(Template.FileName, true);
+        }
+    }
+
+    private void ToggleIsActive(bool isActive)
+    {
+        StateHasChanged();
+    }
+
+    private async Task OnMouseOver(MouseEventArgs mouseEvent)
+    {
+        if (showHamburger == false)
+        {
+            showHamburger = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnMouseLeave(MouseEventArgs mouseEvent)
+    {
+        if (showHamburger)
+        {
+            showHamburger = false;
+            StateHasChanged();
+        }
+    }
+}

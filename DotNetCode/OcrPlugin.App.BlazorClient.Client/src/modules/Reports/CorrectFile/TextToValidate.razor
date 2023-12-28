@@ -1,0 +1,94 @@
+@using OcrPlugin.App.BlazorClient.Client.src.Shared.components;
+@using System.Reflection.Metadata
+
+<Styled @bind-Classname="@_textToValidate">
+    margin: 0px 15px;
+    font-weight: bold;
+    font-size: 20px;
+    border-bottom: 1px solid;
+    position: relative;
+    color: @GetColor();
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+</Styled>
+
+<Styled Classname="@_textToValidate" PseudoClass="PseudoClasses.LastOfType">
+    border-bottom-width: 0px;
+</Styled>
+
+<Styled Classname="@_textToValidate" PseudoClass="PseudoClasses.LastChild">
+    border-bottom-width: 0px;
+</Styled>
+
+<div class="@_textToValidate">
+    <div style="display: inline-block;
+                padding: 10px 0px;
+                width: 25%;
+                border-right: 1px black solid;">@L[PropertyName]</div>
+    @if (!_isEditing)
+    {
+        <div style="display: inline-block; padding: 10px 0px 10px 10px; width: 72%;">
+            @TextToDisplay
+        </div>
+    }
+    else
+    {
+        <input style="display: inline-block; padding: 10px 0px 10px 10px; width: 72%; border: none;"
+               Value="@TextToDisplay"
+               @onchange="@ChangeString"
+               @onfocusout="@SaveNewString"/>
+    }
+
+    <div style="position: absolute;
+                right: 5px;
+                bottom: 10px;
+                cursor: pointer;"
+         onclick="@OnClick">
+        <IconNoMask IconName="report-checkfile-edit" Height="27" Width="27" Margin="unset"/>
+    </div>
+</div>
+
+@code {
+    private string _textToValidate;
+    private bool _isEditing;
+
+    [Parameter]
+    public string PropertyName { get; set; }
+
+    [Parameter]
+    public string TextToDisplay { get; set; }
+
+    private string OriginalValue { get; set; } = null;
+
+    private string GetColor()
+        => "#5355AF";
+
+    private async Task OnClick()
+    {
+        _isEditing = !_isEditing;
+        OriginalValue ??= TextToDisplay;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task ChangeString(ChangeEventArgs e)
+    {
+        if (e.Value is not null && !string.IsNullOrWhiteSpace(e.Value.ToString()))
+        {
+            TextToDisplay = e.Value.ToString();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task SaveNewString()
+    {
+        _isEditing = false;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+}
